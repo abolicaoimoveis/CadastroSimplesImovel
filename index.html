@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Cadastro de Imóvel</title>
+
+<!-- Fontes (você pode trocar depois) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* =====================================================================
+   ====== PONTO DE CONFIGURAÇÃO 1: CORES E LOGO ========================
+   Mude os valores abaixo pra deixar com a cara da sua marca.
+   ===================================================================== */
+:root{
+  --cor-fundo:        #f3ede3;  /* fundo geral (areia) */
+  --cor-superficie:   #ffffff;  /* fundo dos cartões */
+  --cor-texto:        #2b2622;  /* texto principal */
+  --cor-suave:        #8c8175;  /* textos de ajuda */
+  --cor-destaque:     #9a3c2d;  /* cor da marca (botões, detalhes) */
+  --cor-destaque-2:   #7d2e21;  /* tom mais escuro pro hover */
+  --cor-borda:        #e3d9c9;  /* bordas dos campos */
+  --cor-erro:         #c0392b;
+  --raio:             14px;     /* arredondamento */
+}
+
+/* Reset básico */
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'Manrope',sans-serif;
+  background:var(--cor-fundo);
+  color:var(--cor-texto);
+  line-height:1.5;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  padding:0;
+}
+
+/* Container principal — pensado pra celular */
+.wrap{
+  width:100%;
+  max-width:480px;
+  min-height:100vh;
+  background:var(--cor-fundo);
+  display:flex;
+  flex-direction:column;
+  position:relative;
+}
+
+/* Barra de progresso */
+.progress{
+  position:sticky;top:0;z-index:10;
+  height:4px;width:100%;
+  background:var(--cor-borda);
+}
+.progress-fill{
+  height:100%;width:0%;
+  background:var(--cor-destaque);
+  border-radius:0 4px 4px 0;
+  transition:width .35s ease;
+}
+
+/* Cabeçalho com o logo */
+.topo{
+  text-align:center;
+  padding:22px 24px 6px;
+}
+/* ===== LOGO: troque pela sua imagem depois =====
+   Ex.: <img src="logo.png" class="logo" alt="Logo">
+   Por enquanto deixei um texto-marca. */
+.logo{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:20px;
+  color:var(--cor-destaque);
+  letter-spacing:.3px;
+}
+
+/* Conteúdo */
+.conteudo{
+  flex:1;
+  padding:8px 24px 32px;
+}
+
+/* Telas (boas-vindas / obrigado) e etapas: só uma visível por vez */
+.screen,.step{display:none;animation:surge .4s ease both}
+.screen.active,.step.active{display:block}
+@keyframes surge{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ===== Tela de boas-vindas ===== */
+#welcome{text-align:center;padding-top:34px}
+#welcome .hero-icone{
+  width:64px;height:64px;margin:0 auto 22px;
+  border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--cor-destaque);
+  color:#fff;font-size:28px;
+}
+#welcome h1{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:30px;
+  line-height:1.15;
+  margin-bottom:14px;
+}
+#welcome p{color:var(--cor-suave);font-size:16px;margin-bottom:8px}
+#welcome .meta{
+  font-size:13px;color:var(--cor-suave);
+  margin-top:18px;
+}
+
+/* Títulos de etapa */
+.etapa-titulo{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:24px;
+  margin-bottom:4px;
+}
+.etapa-sub{color:var(--cor-suave);font-size:14px;margin-bottom:22px}
+
+/* Campos */
+.campo{margin-bottom:20px}
+.campo label{
+  display:block;
+  font-weight:600;
+  font-size:15px;
+  margin-bottom:8px;
+}
+.req{color:var(--cor-erro);margin-left:2px}
+.dica{display:block;font-weight:400;color:var(--cor-suave);font-size:13px;margin-top:4px}
+
+input[type=text],
+input[type=email],
+input[type=tel],
+input[type=number],
+select,
+textarea{
+  width:100%;
+  font-family:inherit;
+  font-size:16px; /* 16px evita o zoom automático no iPhone */
+  color:var(--cor-texto);
+  background:var(--cor-superficie);
+  border:1.5px solid var(--cor-borda);
+  border-radius:var(--raio);
+  padding:14px 15px;
+  transition:border-color .2s, box-shadow .2s;
+}
+textarea{resize:vertical;min-height:96px}
+input:focus,select:focus,textarea:focus{
+  outline:none;
+  border-color:var(--cor-destaque);
+  box-shadow:0 0 0 3px rgba(154,60,45,.13);
+}
+input.invalido,select.invalido,textarea.invalido{border-color:var(--cor-erro)}
+
+/* Seta customizada nos selects */
+select{
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238c8175' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 15px center;
+  padding-right:42px;
+}
+
+/* Dois campos lado a lado */
+.linha{display:flex;gap:12px}
+.linha .campo{flex:1}
+
+/* Checkboxes (o que está incluso) */
+.checks{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;
+}
+.check{
+  display:flex;align-items:center;gap:10px;
+  background:var(--cor-superficie);
+  border:1.5px solid var(--cor-borda);
+  border-radius:var(--raio);
+  padding:12px 14px;
+  cursor:pointer;
+  font-size:15px;
+  transition:border-color .2s, background .2s;
+}
+.check input{width:20px;height:20px;accent-color:var(--cor-destaque);flex-shrink:0}
+.check:has(input:checked){
+  border-color:var(--cor-destaque);
+  background:rgba(154,60,45,.05);
+}
+
+/* Mensagem de erro */
+.erro-msg{
+  color:var(--cor-erro);
+  font-size:13.5px;
+  margin-top:10px;
+  display:none;
+}
+.erro-msg.show{display:block}
+
+/* Botões de navegação */
+.nav{
+  display:flex;gap:12px;
+  margin-top:28px;
+}
+.btn{
+  font-family:inherit;font-weight:700;font-size:16px;
+  border:none;border-radius:var(--raio);
+  padding:15px 20px;cursor:pointer;
+  transition:transform .08s, background .2s, opacity .2s;
+}
+.btn:active{transform:scale(.98)}
+.btn-principal{
+  flex:1;
+  background:var(--cor-destaque);color:#fff;
+}
+.btn-principal:hover{background:var(--cor-destaque-2)}
+.btn-principal:disabled{opacity:.6;cursor:not-allowed}
+.btn-secundario{
+  background:transparent;
+  color:var(--cor-texto);
+  border:1.5px solid var(--cor-borda);
+  padding-left:24px;padding-right:24px;
+}
+.btn-grande{width:100%}
+
+/* Tela de obrigado */
+#thanks{text-align:center;padding-top:40px}
+#thanks .hero-icone{
+  width:72px;height:72px;margin:0 auto 24px;
+  border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--cor-destaque);color:#fff;font-size:34px;
+}
+#thanks h1{font-family:'Fraunces',serif;font-weight:600;font-size:28px;margin-bottom:12px}
+#thanks p{color:var(--cor-suave);font-size:16px}
+
+/* Spinner do botão durante o envio */
+.spinner{
+  display:inline-block;width:18px;height:18px;
+  border:2.5px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;
+  animation:gira .7s linear infinite;
+  vertical-align:-3px;margin-right:8px;
+}
+@keyframes gira{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Barra de progresso -->
+  <div class="progress" id="progress" style="display:none"><div class="progress-fill" id="progressFill"></div></div>
+
+  <!-- Cabeçalho / Logo -->
+  <header class="topo">
+    <!-- Troque por <img src="logo.png" class="logo"> quando tiver o logo -->
+    <div class="logo">SUA IMOBILIÁRIA</div>
+  </header>
+
+  <div class="conteudo">
+
+    <!-- ============================================================= -->
+    <!-- ====== PONTO DE CONFIGURAÇÃO 2: TEXTO DE BOAS-VINDAS ========= -->
+    <!-- ============================================================= -->
+    <section class="screen active" id="welcome">
+      <div class="hero-icone">🏠</div>
+      <h1>Vamos cadastrar<br>o seu imóvel</h1>
+      <p>Preencha um cadastro rápido com as informações principais.
+         Leva menos de 3 minutos.</p>
+      <button class="btn btn-principal btn-grande" style="margin-top:28px" onclick="iniciar()">Começar</button>
+      <p class="meta">Seus dados são usados apenas para o cadastro do imóvel.</p>
+    </section>
+
+    <!-- ===================== FORMULÁRIO ===================== -->
+    <form id="form" novalidate>
+
+      <!-- ETAPA 1: Dados do proprietário -->
+      <section class="step" id="stepDados">
+        <h2 class="etapa-titulo">Seus dados</h2>
+        <p class="etapa-sub">Para entrarmos em contato com você.</p>
+
+        <div class="campo">
+          <label>Nome do proprietário <span class="req">*</span></label>
+          <input type="text" name="nome_proprietario" placeholder="Nome completo" required>
+        </div>
+
+        <div class="campo">
+          <label>Número do WhatsApp <span class="req">*</span></label>
+          <input type="tel" name="whatsapp" id="whatsapp" placeholder="(00) 00000-0000" required>
+        </div>
+
+        <div class="campo">
+          <label>E-mail <span class="req">*</span></label>
+          <input type="email" name="email" placeholder="exemplo@exemplo.com" required>
+        </div>
+
+        <div class="campo">
+          <label>Endereço do imóvel <span class="req">*</span></label>
+          <textarea name="endereco" placeholder="Rua, bairro, cidade, CEP" required></textarea>
+        </div>
+
+        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
+        <div class="nav">
+          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
+          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
+        </div>
+      </section>
+
+      <!-- ETAPA 2: Sobre o imóvel -->
+      <section class="step" id="stepImovel">
+        <h2 class="etapa-titulo">Sobre o imóvel</h2>
+        <p class="etapa-sub">Características principais.</p>
+
+        <div class="campo">
+          <label>Tipo do imóvel <span class="req">*</span></label>
+          <select name="tipo_imovel" id="tipoImovel" required>
+            <option value="">Favor selecionar</option>
+            <option>Casa térrea</option>
+            <option>Sobrado</option>
+            <option>Apartamento</option>
+            <option>Kitnet</option>
+            <option>Casa de fundos</option>
+            <option>Edícula</option>
+            <option>Barracão/Galpão</option>
+            <option>Sala Comercial</option>
+            <option>Salão</option>
+            <option>Chácara</option>
+          </select>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>Dormitórios <span class="req">*</span></label>
+            <select name="dormitorios" required>
+              <option value="">Selecionar</option>
+              <option>01</option><option>02</option><option>03</option><option>04</option><option>05</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Banheiros <span class="req">*</span></label>
+            <select name="banheiros" required>
+              <option value="">Selecionar</option>
+              <option>01</option><option>02</option><option>03</option><option>04</option><option>05</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Possui suítes? Quantas? <span class="req">*</span></label>
+          <select name="suites" required>
+            <option value="">Favor selecionar</option>
+            <option>Não possui</option>
+            <option>01</option><option>02</option><option>03</option><option>04</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label>Garagem/Vagas</label>
+          <select name="garagem">
+            <option value="">Favor selecionar</option>
+            <option>Não possui garagem</option>
+            <option>Garagem somente para moto</option>
+            <option>01 vaga para carro</option>
+            <option>02 vagas para carros</option>
+            <option>03 vagas para carros</option>
+            <option>04 vagas para carros</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label>Voltagem da energia elétrica <span class="req">*</span></label>
+          <select name="voltagem" required>
+            <option value="">Favor selecionar</option>
+            <option>Somente 110v</option>
+            <option>Somente 220v</option>
+            <option>110v + 220v</option>
+            <option>Trifásico</option>
+            <option>Não sei a voltagem</option>
+          </select>
+        </div>
+
+        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
+        <div class="nav">
+          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
+          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
+        </div>
+      </section>
+
+      <!-- ETAPA 3 (CONDICIONAL): só aparece para Apartamento e Kitnet -->
+      <section class="step" id="stepApto">
+        <h2 class="etapa-titulo">Apartamento e condomínio</h2>
+        <p class="etapa-sub">Aparece só para apartamento e kitnet.</p>
+
+        <div class="linha">
+          <div class="campo">
+            <label>Qual andar? <span class="req">*</span></label>
+            <input type="text" name="andar" data-cond-req>
+          </div>
+          <div class="campo">
+            <label>Tem elevador? Quantos?</label>
+            <input type="text" name="elevador">
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Valor mensal do condomínio (R$)</label>
+          <input type="text" name="valor_condominio" placeholder="se aplicável">
+        </div>
+
+        <div class="campo">
+          <label>O que está incluso no condomínio? <span class="req">*</span></label>
+          <div class="checks">
+            <label class="check"><input type="checkbox" name="incluso" value="Água"> Água</label>
+            <label class="check"><input type="checkbox" name="incluso" value="Gás encanado"> Gás encanado</label>
+            <label class="check"><input type="checkbox" name="incluso" value="Portaria 24h"> Portaria 24h</label>
+            <label class="check"><input type="checkbox" name="incluso" value="Limpeza/manutenção"> Limpeza/manutenção</label>
+            <label class="check"><input type="checkbox" name="incluso" value="Coleta de lixo"> Coleta de lixo</label>
+            <label class="check"><input type="checkbox" name="incluso" value="Sistema de segurança"> Sistema de segurança</label>
+            <label class="check"><input type="checkbox" name="incluso" value="Outros"> Outros</label>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Possui área de lazer? Como é?</label>
+          <textarea name="area_lazer"></textarea>
+        </div>
+
+        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
+        <div class="nav">
+          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
+          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
+        </div>
+      </section>
+
+      <!-- ETAPA 4: Valores e detalhes -->
+      <section class="step" id="stepValores">
+        <h2 class="etapa-titulo">Valores e detalhes</h2>
+        <p class="etapa-sub">Últimas informações.</p>
+
+        <div class="campo">
+          <label>Valor total do aluguel desejado (R$) <span class="req">*</span></label>
+          <input type="text" name="valor_aluguel" required>
+        </div>
+
+        <div class="campo">
+          <label>Deseja destacar algum diferencial do imóvel?</label>
+          <textarea name="diferencial"></textarea>
+          <span class="dica">Ex.: móveis planejados, área gourmet, energia solar, piscina...</span>
+        </div>
+
+        <div class="campo">
+          <label>Quer impor alguma restrição ou exigência ao uso do imóvel?</label>
+          <textarea name="restricoes"></textarea>
+          <span class="dica">Ex.: proibição de animais, limite de ocupantes, não alugar para estudantes...</span>
+        </div>
+
+        <div class="campo">
+          <label>Observação ou comentário</label>
+          <textarea name="observacao"></textarea>
+        </div>
+
+        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
+        <div class="nav">
+          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
+          <button type="button" class="btn btn-principal" id="btnEnviar" onclick="enviar()">Enviar cadastro</button>
+        </div>
+      </section>
+
+    </form>
+
+    <!-- ============================================================= -->
+    <!-- ====== PONTO DE CONFIGURAÇÃO 3: TEXTO DE AGRADECIMENTO ======= -->
+    <!-- ============================================================= -->
+    <section class="screen" id="thanks">
+      <div class="hero-icone">✓</div>
+      <h1>Cadastro enviado!</h1>
+      <p>Recebemos as informações do seu imóvel.<br>
+         Em breve entraremos em contato pelo WhatsApp.</p>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   ====== PONTO DE CONFIGURAÇÃO 4: LINK DO MAKE (WEBHOOK) ==============
+   Cole aqui o endereço (webhook) que o Make vai te dar.
+   Enquanto estiver vazio, o formulário só simula o envio.
+   ===================================================================== */
+const WEBHOOK_URL = "https://hook.us2.make.com/2kbqo3mtjpw56buop1g43s6zjvfvk3bh";
+
+/* ---- daqui pra baixo é a "mágica"; normalmente você não mexe ---- */
+
+const progress     = document.getElementById('progress');
+const progressFill = document.getElementById('progressFill');
+const welcome      = document.getElementById('welcome');
+const thanks       = document.getElementById('thanks');
+
+// Quais tipos de imóvel mostram a etapa de apartamento/condomínio
+const TIPOS_APTO = ['Apartamento','Kitnet'];
+
+let indice = 0; // posição atual dentro da sequência de etapas
+
+// Monta a ordem das etapas. A etapa "stepApto" só entra se for apto/kitnet.
+function sequencia(){
+  const tipo = document.getElementById('tipoImovel').value;
+  const base = ['stepDados','stepImovel'];
+  if(TIPOS_APTO.includes(tipo)) base.push('stepApto');
+  base.push('stepValores');
+  return base;
+}
+
+function mostrarEtapa(i){
+  const seq = sequencia();
+  indice = i;
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  welcome.classList.remove('active');
+  thanks.classList.remove('active');
+  document.getElementById(seq[i]).classList.add('active');
+  // progresso
+  progress.style.display = 'block';
+  progressFill.style.width = ((i+1)/seq.length*100) + '%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function iniciar(){ mostrarEtapa(0); }
+
+function avancar(){
+  const seq = sequencia();
+  const etapaEl = document.getElementById(seq[indice]);
+  if(!validar(etapaEl)) return;
+  if(indice < seq.length-1){ mostrarEtapa(indice+1); }
+}
+
+function voltar(){
+  if(indice === 0){
+    // volta pra tela de boas-vindas
+    document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+    welcome.classList.add('active');
+    progress.style.display = 'none';
+    window.scrollTo({top:0,behavior:'smooth'});
+  } else {
+    mostrarEtapa(indice-1);
+  }
+}
+
+// Validação: confere os campos obrigatórios da etapa visível
+function validar(etapaEl){
+  let ok = true;
+  const erroBox = etapaEl.querySelector('[data-erro]');
+
+  // campos required normais
+  etapaEl.querySelectorAll('[required]').forEach(c=>{
+    marcar(c, !!c.value.trim());
+    if(!c.value.trim()) ok = false;
+  });
+  // campos obrigatórios só quando a etapa aparece (ex.: andar)
+  etapaEl.querySelectorAll('[data-cond-req]').forEach(c=>{
+    marcar(c, !!c.value.trim());
+    if(!c.value.trim()) ok = false;
+  });
+  // e-mail precisa ter formato válido
+  const email = etapaEl.querySelector('input[type=email]');
+  if(email && email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)){
+    marcar(email,false); ok=false;
+  }
+  // checkboxes obrigatórios (incluso no condomínio): ao menos 1
+  if(etapaEl.querySelector('input[name=incluso]')){
+    const algum = etapaEl.querySelector('input[name=incluso]:checked');
+    if(!algum) ok = false;
+  }
+
+  if(erroBox) erroBox.classList.toggle('show', !ok);
+  return ok;
+}
+
+function marcar(campo, valido){
+  campo.classList.toggle('invalido', !valido);
+}
+
+// Máscara simples do telefone: (00) 00000-0000
+document.getElementById('whatsapp').addEventListener('input', function(e){
+  let v = e.target.value.replace(/\D/g,'').slice(0,11);
+  if(v.length > 6)      v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+  else if(v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+  else if(v.length > 0) v = `(${v}`;
+  e.target.value = v;
+});
+
+// Envio final
+async function enviar(){
+  const seq = sequencia();
+  const etapaEl = document.getElementById(seq[indice]);
+  if(!validar(etapaEl)) return;
+
+  const btn = document.getElementById('btnEnviar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Enviando...';
+
+  // Junta todas as respostas num objeto
+  const form = document.getElementById('form');
+  const fd = new FormData(form);
+  const dados = {};
+  fd.forEach((valor, chave)=>{
+    if(chave === 'incluso'){
+      dados.incluso = dados.incluso ? dados.incluso + ', ' + valor : valor;
+    } else {
+      dados[chave] = valor;
+    }
+  });
+  dados.data_envio = new Date().toLocaleString('pt-BR');
+
+  try{
+    if(WEBHOOK_URL){
+      await fetch(WEBHOOK_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(dados)
+      });
+    } else {
+      // Sem webhook ainda: só simula (pra você testar o visual)
+      console.log('Dados que seriam enviados:', dados);
+      await new Promise(r=>setTimeout(r,800));
+    }
+    // Mostra a tela de agradecimento
+    document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+    progressFill.style.width = '100%';
+    thanks.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(err){
+    btn.disabled = false;
+    btn.innerHTML = 'Enviar cadastro';
+    alert('Não conseguimos enviar agora. Verifique sua internet e tente novamente.');
+  }
+}
+</script>
+</body>
+</html>
