@@ -613,6 +613,8 @@ async function enviar(){
       dados[chave] = valor;
     }
   });
+   const params = new URLSearchParams(window.location.search);
+  dados.parceiro = params.get('parceiro') || '';
   dados.data_envio = new Date().toLocaleString('pt-BR');
 
   try{
