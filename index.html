@@ -3,26 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Cadastro de Imóvel</title>
+<title>Cadastro de Imóvel — Moralí</title>
 
-<!-- Fontes (você pode trocar depois) -->
+<!-- Fonte oficial da Moralí: Outfit -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
 /* =====================================================================
    ====== PONTO DE CONFIGURAÇÃO 1: CORES E LOGO ========================
-   Mude os valores abaixo pra deixar com a cara da sua marca.
+   Cores oficiais da Moralí já aplicadas.
    ===================================================================== */
 :root{
-  --cor-fundo:        #f3ede3;  /* fundo geral (areia) */
+  --cor-fundo:        #eef2f4;  /* fundo geral (cinza claro) */
   --cor-superficie:   #ffffff;  /* fundo dos cartões */
-  --cor-texto:        #2b2622;  /* texto principal */
-  --cor-suave:        #8c8175;  /* textos de ajuda */
-  --cor-destaque:     #9a3c2d;  /* cor da marca (botões, detalhes) */
-  --cor-destaque-2:   #7d2e21;  /* tom mais escuro pro hover */
-  --cor-borda:        #e3d9c9;  /* bordas dos campos */
+  --cor-texto:        #0a2230;  /* texto principal */
+  --cor-suave:        #5b7384;  /* textos de ajuda */
+  --cor-destaque:     #023047;  /* AZUL PETRÓLEO — cor principal da marca */
+  --cor-destaque-2:   #06425e;  /* tom pro hover dos botões */
+  --cor-verde:        #70d262;  /* VERDE CHECK — confirmação */
+  --cor-borda:        #d8e0e5;  /* bordas dos campos */
   --cor-erro:         #c0392b;
   --raio:             14px;     /* arredondamento */
 }
@@ -31,7 +32,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{
-  font-family:'Manrope',sans-serif;
+  font-family:'Outfit',sans-serif;
   background:var(--cor-fundo);
   color:var(--cor-texto);
   line-height:1.5;
@@ -60,7 +61,7 @@ body{
 }
 .progress-fill{
   height:100%;width:0%;
-  background:var(--cor-destaque);
+  background:var(--cor-verde);
   border-radius:0 4px 4px 0;
   transition:width .35s ease;
 }
@@ -70,15 +71,12 @@ body{
   text-align:center;
   padding:22px 24px 6px;
 }
-/* ===== LOGO: troque pela sua imagem depois =====
-   Ex.: <img src="logo.png" class="logo" alt="Logo">
-   Por enquanto deixei um texto-marca. */
-.logo{
-  font-family:'Fraunces',serif;
-  font-weight:600;
-  font-size:20px;
-  color:var(--cor-destaque);
-  letter-spacing:.3px;
+/* ===== LOGO =====
+   Suba a imagem do logo no GitHub (mesmo lugar do index.html) com o nome
+   logo.png — ela aparece automaticamente aqui. */
+.logo-img{
+  height:40px;
+  width:auto;
 }
 
 /* Conteúdo */
@@ -102,11 +100,12 @@ body{
   color:#fff;font-size:28px;
 }
 #welcome h1{
-  font-family:'Fraunces',serif;
-  font-weight:600;
+  font-family:'Outfit',sans-serif;
+  font-weight:700;
   font-size:30px;
   line-height:1.15;
   margin-bottom:14px;
+  color:var(--cor-destaque);
 }
 #welcome p{color:var(--cor-suave);font-size:16px;margin-bottom:8px}
 #welcome .meta{
@@ -116,10 +115,11 @@ body{
 
 /* Títulos de etapa */
 .etapa-titulo{
-  font-family:'Fraunces',serif;
-  font-weight:600;
+  font-family:'Outfit',sans-serif;
+  font-weight:700;
   font-size:24px;
   margin-bottom:4px;
+  color:var(--cor-destaque);
 }
 .etapa-sub{color:var(--cor-suave);font-size:14px;margin-bottom:22px}
 
@@ -154,14 +154,14 @@ textarea{resize:vertical;min-height:96px}
 input:focus,select:focus,textarea:focus{
   outline:none;
   border-color:var(--cor-destaque);
-  box-shadow:0 0 0 3px rgba(154,60,45,.13);
+  box-shadow:0 0 0 3px rgba(2,48,71,.15);
 }
 input.invalido,select.invalido,textarea.invalido{border-color:var(--cor-erro)}
 
 /* Seta customizada nos selects */
 select{
   appearance:none;-webkit-appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238c8175' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235b7384' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat:no-repeat;
   background-position:right 15px center;
   padding-right:42px;
@@ -190,7 +190,7 @@ select{
 .check input{width:20px;height:20px;accent-color:var(--cor-destaque);flex-shrink:0}
 .check:has(input:checked){
   border-color:var(--cor-destaque);
-  background:rgba(154,60,45,.05);
+  background:rgba(2,48,71,.05);
 }
 
 /* Mensagem de erro */
@@ -234,10 +234,20 @@ select{
   width:72px;height:72px;margin:0 auto 24px;
   border-radius:50%;
   display:grid;place-items:center;
-  background:var(--cor-destaque);color:#fff;font-size:34px;
+  background:var(--cor-verde);color:#fff;font-size:34px;
 }
-#thanks h1{font-family:'Fraunces',serif;font-weight:600;font-size:28px;margin-bottom:12px}
+#thanks h1{font-family:'Outfit',sans-serif;font-weight:700;font-size:28px;margin-bottom:12px;color:var(--cor-destaque)}
 #thanks p{color:var(--cor-suave);font-size:16px}
+
+/* Rodapé institucional */
+.rodape{
+  text-align:center;
+  padding:18px 24px 26px;
+  font-size:11.5px;
+  color:var(--cor-suave);
+  line-height:1.7;
+  border-top:1px solid var(--cor-borda);
+}
 
 /* Spinner do botão durante o envio */
 .spinner{
@@ -258,8 +268,7 @@ select{
 
   <!-- Cabeçalho / Logo -->
   <header class="topo">
-    <!-- Troque por <img src="logo.png" class="logo"> quando tiver o logo -->
-    <div class="logo">SUA IMOBILIÁRIA</div>
+    <img src="logo.png" alt="Moralí" class="logo-img">
   </header>
 
   <div class="conteudo">
@@ -484,13 +493,18 @@ select{
     </section>
 
   </div>
+
+  <!-- Rodapé institucional -->
+  <footer class="rodape">
+    RC GESTÃO IMOBILIÁRIA LTDA<br>
+    CNPJ 07.697.516/0001-86 · Desde 2005
+  </footer>
+
 </div>
 
 <script>
 /* =====================================================================
    ====== PONTO DE CONFIGURAÇÃO 4: LINK DO MAKE (WEBHOOK) ==============
-   Cole aqui o endereço (webhook) que o Make vai te dar.
-   Enquanto estiver vazio, o formulário só simula o envio.
    ===================================================================== */
 const WEBHOOK_URL = "https://hook.us2.make.com/2kbqo3mtjpw56buop1g43s6zjvfvk3bh";
 
@@ -613,7 +627,7 @@ async function enviar(){
       dados[chave] = valor;
     }
   });
-   const params = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(window.location.search);
   dados.parceiro = params.get('parceiro') || '';
   dados.data_envio = new Date().toLocaleString('pt-BR');
 
