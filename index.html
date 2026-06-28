@@ -73,7 +73,7 @@ body{
 }
 /* ===== LOGO =====
    Suba a imagem do logo no GitHub (mesmo lugar do index.html) com o nome
-   logo.png — ela aparece automaticamente aqui. */
+   logo.png — ela aparece automaticamente . */
 .logo-img{
   height:40px;
   width:auto;
@@ -217,6 +217,26 @@ select{
   border-color:var(--cor-destaque);
   background:rgba(2,48,71,.05);
 }
+
+/* Área de upload do documento */
+.dropzone{
+  border:1.5px dashed var(--cor-borda);
+  border-radius:var(--raio);
+  padding:24px 16px;text-align:center;cursor:pointer;display:block;
+  transition:border-color .2s, background .2s;
+}
+.dropzone:hover{border-color:var(--cor-destaque);background:rgba(2,48,71,.03)}
+.dropzone svg{width:34px;height:34px;stroke:var(--cor-destaque);margin-bottom:8px}
+.dropzone p{font-size:14px;color:var(--cor-suave)}
+.dropzone .destaque{color:var(--cor-destaque);font-weight:600}
+.dropzone input[type=file]{display:none}
+.doc-sel{
+  display:none;align-items:center;gap:10px;margin-top:10px;
+  padding:10px 12px;background:#eef7ec;border-radius:var(--raio);font-size:14px;
+}
+.doc-sel.show{display:flex}
+.doc-sel .nome{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-sel button{background:none;border:none;color:var(--cor-suave);font-size:20px;cursor:pointer;line-height:1}
 
 /* Caixa de consentimento (sem borda, alinhada ao topo) */
 .consent-check{
@@ -775,6 +795,23 @@ select{
           <textarea name="observacao"></textarea>
         </div>
 
+        <div class="campo">
+          <label>Documento do proprietário <span class="dica" style="display:inline;font-weight:400">(opcional)</span></label>
+          <span class="dica" style="margin-top:0;margin-bottom:8px">Foto ou PDF do RG ou CNH, para confirmar sua identidade. Pode enviar depois, se preferir.</span>
+          <label class="dropzone" for="documento">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p><span class="destaque">Toque para escolher</span> ou arraste o arquivo .</p>
+            <input type="file" id="documento" accept="image/*,application/pdf">
+          </label>
+          <div class="doc-sel" id="docSelecionado">
+            <span class="nome" id="docNome"></span>
+            <button type="button" id="docRemover" title="Remover">&times;</button>
+          </div>
+        </div>
+
         <!-- Consentimento LGPD: obrigatório para enviar -->
         <div class="campo">
           <label class="check consent-check">
@@ -822,6 +859,15 @@ select{
    ====== PONTO DE CONFIGURAÇÃO 4: LINK DO MAKE (WEBHOOK) ==============
    ===================================================================== */
 const WEBHOOK_URL = "https://hook.us2.make.com/2kbqo3mtjpw56buop1g43s6zjvfvk3bh";
+
+/* =====================================================================
+   ====== PONTO DE CONFIGURAÇÃO 5: SUPABASE (upload do documento) ======
+   Troque apenas a CHAVE pela sua "anon public" (Settings → API Keys).
+   NUNCA use a service_role aqui.
+   ===================================================================== */
+const SUPABASE_URL      = "https://gcoikoeiuwaygjjwedjp.supabase.co";
+const SUPABASE_BUCKET   = "documentos-proprietarios";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdjb2lrb2VpdXdheWdqandlZGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTAyODQsImV4cCI6MjA5NDE4NjI4NH0.B_DXIbf-asPDhe_lVG7pKT1jMLuDmqsLopmfsEjYfZs";
 
 /* ---- daqui pra baixo é a "mágica"; normalmente você não mexe ---- */
 
@@ -990,6 +1036,44 @@ document.addEventListener('input', function(e){
   else if(t.classList.contains('mask-cep')) t.value = maskCep(t.value);
 });
 
+/* ===== Documento: exibir arquivo escolhido e permitir remover ===== */
+const inputDoc = document.getElementById('documento');
+const docSel   = document.getElementById('docSelecionado');
+const docNome  = document.getElementById('docNome');
+if(inputDoc){
+  inputDoc.addEventListener('change', ()=>{
+    if(inputDoc.files.length){
+      docNome.textContent = inputDoc.files[0].name;
+      docSel.classList.add('show');
+    } else {
+      docSel.classList.remove('show');
+    }
+  });
+  document.getElementById('docRemover').addEventListener('click', ()=>{
+    inputDoc.value = '';
+    docSel.classList.remove('show');
+  });
+}
+
+/* Envia o documento direto para o Supabase (bucket privado) e
+   devolve o nome do arquivo guardado. Não joga a imagem na planilha. */
+async function enviarDocumento(file){
+  const ext = (file.name.split('.').pop() || 'dat').toLowerCase();
+  const caminho = `documento_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const url = `${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${caminho}`;
+  const resp = await fetch(url, {
+    method:'POST',
+    headers:{
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': file.type || 'application/octet-stream'
+    },
+    body: file
+  });
+  if(!resp.ok) throw new Error('Falha no upload: ' + resp.status);
+  return caminho;
+}
+
 // Envio final
 async function enviar(){
   const seq = sequencia();
@@ -1026,6 +1110,19 @@ async function enviar(){
   dados.endereco = `${dados.endereco_logradouro || ''}, ${dados.endereco_numero || ''}${_comp}, `
                  + `${dados.endereco_bairro || ''}, ${dados.endereco_cidade || ''}/${dados.endereco_estado || ''}, `
                  + `CEP ${dados.endereco_cep || ''}`;
+
+  // Documento (opcional): se houver arquivo, envia ao Supabase antes do cadastro
+  let docCaminho = '', docStatus = 'sem documento';
+  if(inputDoc && inputDoc.files.length){
+    try{
+      docCaminho = await enviarDocumento(inputDoc.files[0]);
+      docStatus  = 'enviado';
+    }catch(e){
+      docStatus  = 'falha no envio';
+    }
+  }
+  dados.documento_arquivo = docCaminho;
+  dados.documento_status  = docStatus;
 
   const params = new URLSearchParams(window.location.search);
   dados.parceiro = params.get('parceiro') || '';
