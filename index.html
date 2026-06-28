@@ -79,6 +79,29 @@ body{
   width:auto;
 }
 
+/* Régua de fases (Proprietário / Imóvel / Valores) */
+.stepper{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:6px;padding:2px 24px 12px;position:relative;
+  width:100%;max-width:480px;margin:0 auto;
+}
+.stepper::before{
+  content:"";position:absolute;top:9px;left:18%;right:18%;
+  height:2px;background:var(--cor-borda);z-index:0;
+}
+.step-item{display:flex;flex-direction:column;align-items:center;gap:7px;flex:1;z-index:1}
+.step-dot{
+  width:18px;height:18px;border-radius:50%;
+  background:var(--cor-borda);transition:background .3s;
+}
+.step-label{
+  font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;
+  color:var(--cor-suave);text-align:center;
+}
+.step-item.done .step-dot{background:var(--cor-verde)}
+.step-item.active .step-dot{background:var(--cor-destaque)}
+.step-item.active .step-label{color:var(--cor-destaque)}
+
 /* Conteúdo */
 .conteudo{
   flex:1;
@@ -138,6 +161,7 @@ input[type=text],
 input[type=email],
 input[type=tel],
 input[type=number],
+input[type=date],
 select,
 textarea{
   width:100%;
@@ -171,12 +195,13 @@ select{
 .linha{display:flex;gap:12px}
 .linha .campo{flex:1}
 
-/* Checkboxes (o que está incluso) */
+/* Checkboxes e opções */
 .checks{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
   gap:10px;
 }
+.radios{display:grid;gap:10px}
 .check{
   display:flex;align-items:center;gap:10px;
   background:var(--cor-superficie);
@@ -191,6 +216,25 @@ select{
 .check:has(input:checked){
   border-color:var(--cor-destaque);
   background:rgba(2,48,71,.05);
+}
+
+/* Caixa de consentimento (sem borda, alinhada ao topo) */
+.consent-check{
+  border:none;background:transparent;padding:0;
+  align-items:flex-start;font-size:14px;line-height:1.5;
+}
+.consent-check input{margin-top:2px}
+.consent-check a{color:var(--cor-destaque);font-weight:600}
+
+/* Aviso de privacidade no rodapé das etapas com dados pessoais */
+.aviso-lgpd{
+  background:#eef7ec;
+  border:1px solid var(--cor-verde);
+  border-radius:var(--raio);
+  padding:12px 14px;
+  font-size:13px;
+  color:var(--cor-texto);
+  margin-bottom:20px;
 }
 
 /* Mensagem de erro */
@@ -237,7 +281,7 @@ select{
   background:var(--cor-verde);color:#fff;font-size:34px;
 }
 #thanks h1{font-family:'Outfit',sans-serif;font-weight:700;font-size:28px;margin-bottom:12px;color:var(--cor-destaque)}
-#thanks p{color:var(--cor-suave);font-size:16px}
+#thanks p{color:var(--cor-suave);font-size:16px;margin-bottom:10px}
 
 /* Rodapé institucional */
 .rodape{
@@ -268,8 +312,15 @@ select{
 
   <!-- Cabeçalho / Logo -->
   <header class="topo">
-    <img src="logo.png" alt="Moralí" class="logo-img">
+    <img src="https://cadastro.imoveismorali.com.br/logo.png" alt="Moralí" class="logo-img">
   </header>
+
+  <!-- Régua de fases -->
+  <div class="stepper" id="stepper" style="display:none">
+    <div class="step-item" data-phase="0"><span class="step-dot"></span><span class="step-label">Proprietário</span></div>
+    <div class="step-item" data-phase="1"><span class="step-dot"></span><span class="step-label">Imóvel</span></div>
+    <div class="step-item" data-phase="2"><span class="step-dot"></span><span class="step-label">Valores</span></div>
+  </div>
 
   <div class="conteudo">
 
@@ -277,40 +328,214 @@ select{
     <!-- ====== PONTO DE CONFIGURAÇÃO 2: TEXTO DE BOAS-VINDAS ========= -->
     <!-- ============================================================= -->
     <section class="screen active" id="welcome">
-      <div class="hero-icone">🏠</div>
+      <div class="hero-icone">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 11.5 12 4l9 7.5"/>
+          <path d="M5 10v10h14V10"/>
+          <path d="M9.5 20v-6h5v6"/>
+        </svg>
+      </div>
       <h1>Vamos cadastrar<br>o seu imóvel</h1>
       <p>Preencha um cadastro rápido com as informações principais.
-         Leva menos de 3 minutos.</p>
+         Leva poucos minutos.</p>
       <button class="btn btn-principal btn-grande" style="margin-top:28px" onclick="iniciar()">Começar</button>
-      <p class="meta">Seus dados são usados apenas para o cadastro do imóvel.</p>
+      <p class="meta">Seus dados são tratados conforme a LGPD e usados apenas para o cadastro do imóvel.</p>
     </section>
 
     <!-- ===================== FORMULÁRIO ===================== -->
     <form id="form" novalidate>
 
-      <!-- ETAPA 1: Dados do proprietário -->
-      <section class="step" id="stepDados">
-        <h2 class="etapa-titulo">Seus dados</h2>
-        <p class="etapa-sub">Para entrarmos em contato com você.</p>
+      <!-- ETAPA 0: Tipo de proprietário (primeira pergunta) -->
+      <section class="step" id="stepTipoProp">
+        <h2 class="etapa-titulo">O proprietário do imóvel é</h2>
+        <p class="etapa-sub">Escolha uma opção para continuar.</p>
 
-        <div class="campo">
-          <label>Nome do proprietário <span class="req">*</span></label>
-          <input type="text" name="nome_proprietario" placeholder="Nome completo" required>
+        <div class="radios">
+          <label class="check"><input type="radio" name="proprietario_tipo" value="Pessoa Física (CPF)"> Pessoa Física (CPF)</label>
+          <label class="check"><input type="radio" name="proprietario_tipo" value="Pessoa Jurídica (CNPJ)"> Pessoa Jurídica (CNPJ)</label>
+        </div>
+
+        <div class="erro-msg" data-erro>Selecione uma opção para continuar.</div>
+        <div class="nav">
+          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
+          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
+        </div>
+      </section>
+
+      <!-- ETAPA 1A (PESSOA FÍSICA): Dados do proprietário -->
+      <section class="step" id="stepDadosPF">
+        <h2 class="etapa-titulo">Dados do proprietário</h2>
+        <p class="etapa-sub">Pessoa física.</p>
+
+        <div class="aviso-lgpd">
+          Pedimos seu documento e dados pessoais para confirmar sua identidade no cadastro. Tratamento conforme a LGPD — detalhes no Termo de Uso, no fim do formulário.
         </div>
 
         <div class="campo">
-          <label>Número do WhatsApp <span class="req">*</span></label>
-          <input type="tel" name="whatsapp" id="whatsapp" placeholder="(00) 00000-0000" required>
+          <label>Nome completo <span class="req">*</span></label>
+          <input type="text" name="pf_nome" placeholder="Nome e sobrenome" required>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>CPF <span class="req">*</span></label>
+            <input type="text" name="pf_cpf" class="mask-cpf" placeholder="000.000.000-00" required>
+          </div>
+          <div class="campo">
+            <label>RG <span class="req">*</span></label>
+            <input type="text" name="pf_rg" placeholder="Número do RG" required>
+          </div>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>Data de nascimento <span class="req">*</span></label>
+            <input type="date" name="pf_nascimento" required>
+          </div>
+          <div class="campo">
+            <label>Estado civil <span class="req">*</span></label>
+            <select name="pf_estado_civil" required>
+              <option value="">Selecione</option>
+              <option>Solteiro(a)</option>
+              <option>Casado(a)</option>
+              <option>União estável</option>
+              <option>Divorciado(a)</option>
+              <option>Separado(a)</option>
+              <option>Viúvo(a)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>WhatsApp <span class="req">*</span></label>
+            <input type="tel" name="pf_whatsapp" class="mask-tel" placeholder="(00) 00000-0000" required>
+          </div>
+          <div class="campo">
+            <label>E-mail <span class="req">*</span></label>
+            <input type="email" name="pf_email" placeholder="exemplo@exemplo.com" required>
+          </div>
         </div>
 
         <div class="campo">
-          <label>E-mail <span class="req">*</span></label>
-          <input type="email" name="email" placeholder="exemplo@exemplo.com" required>
+          <label>Endereço residencial <span class="req">*</span></label>
+          <textarea name="pf_endereco" placeholder="Rua, bairro, cidade, CEP" required></textarea>
+        </div>
+
+        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
+        <div class="nav">
+          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
+          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
+        </div>
+      </section>
+
+      <!-- ETAPA 1B (PESSOA JURÍDICA): Dados da empresa -->
+      <section class="step" id="stepDadosPJ">
+        <h2 class="etapa-titulo">Dados do proprietário</h2>
+        <p class="etapa-sub">Pessoa jurídica — dados da empresa.</p>
+
+        <div class="campo">
+          <label>Razão social <span class="req">*</span></label>
+          <input type="text" name="pj_razao" required>
         </div>
 
         <div class="campo">
-          <label>Endereço do imóvel <span class="req">*</span></label>
-          <textarea name="endereco" placeholder="Rua, bairro, cidade, CEP" required></textarea>
+          <label>Ramo de atividade <span class="req">*</span></label>
+          <input type="text" name="pj_ramo" required>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>CNPJ <span class="req">*</span></label>
+            <input type="text" name="pj_cnpj" class="mask-cnpj" placeholder="00.000.000/0000-00" required>
+          </div>
+          <div class="campo">
+            <label>Data de abertura <span class="req">*</span></label>
+            <input type="date" name="pj_abertura" required>
+          </div>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>E-mail da empresa <span class="req">*</span></label>
+            <input type="email" name="pj_email" placeholder="exemplo@exemplo.com" required>
+          </div>
+          <div class="campo">
+            <label>Telefone da empresa <span class="req">*</span></label>
+            <input type="tel" name="pj_telefone" class="mask-tel" placeholder="(00) 00000-0000" required>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Endereço da empresa <span class="req">*</span></label>
+          <textarea name="pj_endereco" placeholder="Rua, bairro, cidade, CEP" required></textarea>
+        </div>
+
+        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
+        <div class="nav">
+          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
+          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
+        </div>
+      </section>
+
+      <!-- ETAPA 1C (PESSOA JURÍDICA): Sócio principal -->
+      <section class="step" id="stepSocio">
+        <h2 class="etapa-titulo">Sócio principal</h2>
+        <p class="etapa-sub">Dados do responsável pela empresa.</p>
+
+        <div class="aviso-lgpd">
+          Pedimos os dados do sócio principal para confirmar a identidade do responsável. Tratamento conforme a LGPD — detalhes no Termo de Uso, no fim do formulário.
+        </div>
+
+        <div class="campo">
+          <label>Nome completo <span class="req">*</span></label>
+          <input type="text" name="so_nome" placeholder="Nome e sobrenome" required>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>CPF <span class="req">*</span></label>
+            <input type="text" name="so_cpf" class="mask-cpf" placeholder="000.000.000-00" required>
+          </div>
+          <div class="campo">
+            <label>RG <span class="req">*</span></label>
+            <input type="text" name="so_rg" placeholder="Número do RG" required>
+          </div>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>Data de nascimento <span class="req">*</span></label>
+            <input type="date" name="so_nascimento" required>
+          </div>
+          <div class="campo">
+            <label>Estado civil <span class="req">*</span></label>
+            <select name="so_estado_civil" required>
+              <option value="">Selecione</option>
+              <option>Solteiro(a)</option>
+              <option>Casado(a)</option>
+              <option>União estável</option>
+              <option>Divorciado(a)</option>
+              <option>Separado(a)</option>
+              <option>Viúvo(a)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>WhatsApp <span class="req">*</span></label>
+            <input type="tel" name="so_whatsapp" class="mask-tel" placeholder="(00) 00000-0000" required>
+          </div>
+          <div class="campo">
+            <label>E-mail <span class="req">*</span></label>
+            <input type="email" name="so_email" placeholder="exemplo@exemplo.com" required>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Endereço residencial do sócio <span class="req">*</span></label>
+          <textarea name="so_endereco" placeholder="Rua, bairro, cidade, CEP" required></textarea>
         </div>
 
         <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
@@ -324,6 +549,52 @@ select{
       <section class="step" id="stepImovel">
         <h2 class="etapa-titulo">Sobre o imóvel</h2>
         <p class="etapa-sub">Características principais.</p>
+
+        <div class="campo">
+          <label>Endereço do imóvel <span class="req">*</span></label>
+          <input type="text" name="endereco_logradouro" placeholder="Rua / Avenida" required>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>Número <span class="req">*</span></label>
+            <input type="text" name="endereco_numero" placeholder="123 ou S/N" required>
+          </div>
+          <div class="campo">
+            <label>Complemento</label>
+            <input type="text" name="endereco_complemento" placeholder="Apto, bloco...">
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Bairro <span class="req">*</span></label>
+          <input type="text" name="endereco_bairro" required>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label>Cidade <span class="req">*</span></label>
+            <input type="text" name="endereco_cidade" required>
+          </div>
+          <div class="campo">
+            <label>Estado <span class="req">*</span></label>
+            <select name="endereco_estado" required>
+              <option value="">UF</option>
+              <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+              <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+              <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+              <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+              <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+              <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+              <option>SP</option><option>SE</option><option>TO</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>CEP <span class="req">*</span></label>
+          <input type="text" name="endereco_cep" class="mask-cep" placeholder="00000-000" required>
+        </div>
 
         <div class="campo">
           <label>Tipo do imóvel <span class="req">*</span></label>
@@ -457,6 +728,37 @@ select{
         </div>
 
         <div class="campo">
+          <label>Quem paga o IPTU durante a locação? <span class="req">*</span></label>
+          <select name="iptu_responsavel" required>
+            <option value="">Favor selecionar</option>
+            <option>Proprietário</option>
+            <option>Inquilino</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label>Prazo do contrato: 30 meses, com permanência mínima de 12 meses <span class="req">*</span></label>
+          <select name="prazo_contrato" required>
+            <option value="">Favor selecionar</option>
+            <option>Concordo</option>
+            <option>Discordo</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label>Unidade Consumidora (água e luz)</label>
+          <span class="dica" style="margin-top:0;margin-bottom:8px">Facilita a transferência de titularidade para o futuro locatário.</span>
+          <div class="linha">
+            <div class="campo" style="margin-bottom:0">
+              <input type="text" name="uc_agua" placeholder="Nº da água">
+            </div>
+            <div class="campo" style="margin-bottom:0">
+              <input type="text" name="uc_energia" placeholder="Nº da energia">
+            </div>
+          </div>
+        </div>
+
+        <div class="campo">
           <label>Deseja destacar algum diferencial do imóvel?</label>
           <textarea name="diferencial"></textarea>
           <span class="dica">Ex.: móveis planejados, área gourmet, energia solar, piscina...</span>
@@ -473,7 +775,16 @@ select{
           <textarea name="observacao"></textarea>
         </div>
 
-        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
+        <!-- Consentimento LGPD: obrigatório para enviar -->
+        <div class="campo">
+          <label class="check consent-check">
+            <input type="checkbox" id="aceiteTermos" name="aceite_lgpd" value="Aceito">
+            <span>Li e concordo com o uso dos meus dados, conforme o
+              <a href="termo.html" target="_blank">Termo de Uso e Privacidade (LGPD)</a>.</span>
+          </label>
+        </div>
+
+        <div class="erro-msg" data-erro>Preencha os campos obrigatórios e aceite o Termo para continuar.</div>
         <div class="nav">
           <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
           <button type="button" class="btn btn-principal" id="btnEnviar" onclick="enviar()">Enviar cadastro</button>
@@ -486,10 +797,14 @@ select{
     <!-- ====== PONTO DE CONFIGURAÇÃO 3: TEXTO DE AGRADECIMENTO ======= -->
     <!-- ============================================================= -->
     <section class="screen" id="thanks">
-      <div class="hero-icone">✓</div>
+      <div class="hero-icone">
+        <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
       <h1>Cadastro enviado!</h1>
-      <p>Recebemos as informações do seu imóvel.<br>
-         Em breve entraremos em contato pelo WhatsApp.</p>
+      <p>Recebemos as informações do seu imóvel e em breve entraremos em contato pelo WhatsApp.</p>
+      <p>Obrigado por confiar na Moralí para cuidar do seu patrimônio.</p>
     </section>
 
   </div>
@@ -514,19 +829,51 @@ const progress     = document.getElementById('progress');
 const progressFill = document.getElementById('progressFill');
 const welcome      = document.getElementById('welcome');
 const thanks       = document.getElementById('thanks');
+const stepper      = document.getElementById('stepper');
+
+// A qual fase da régua cada etapa pertence
+const FASE = {
+  stepTipoProp:0, stepDadosPF:0, stepDadosPJ:0, stepSocio:0,
+  stepImovel:1,  stepApto:1,
+  stepValores:2
+};
+
+// Atualiza a régua de fases conforme a etapa atual
+function atualizarRegua(stepId){
+  const fase = FASE[stepId] || 0;
+  document.querySelectorAll('.step-item').forEach(el=>{
+    const p = parseInt(el.dataset.phase, 10);
+    el.classList.toggle('done',   p < fase);
+    el.classList.toggle('active', p === fase);
+  });
+}
 
 // Quais tipos de imóvel mostram a etapa de apartamento/condomínio
 const TIPOS_APTO = ['Apartamento','Kitnet'];
 
 let indice = 0; // posição atual dentro da sequência de etapas
 
-// Monta a ordem das etapas. A etapa "stepApto" só entra se for apto/kitnet.
+// Lê a opção PF/PJ marcada
+function tipoProprietario(){
+  const r = document.querySelector('input[name=proprietario_tipo]:checked');
+  return r ? r.value : '';
+}
+
+// Monta a ordem das etapas, conforme PF/PJ e tipo do imóvel.
 function sequencia(){
-  const tipo = document.getElementById('tipoImovel').value;
-  const base = ['stepDados','stepImovel'];
-  if(TIPOS_APTO.includes(tipo)) base.push('stepApto');
-  base.push('stepValores');
-  return base;
+  const tipoProp   = tipoProprietario();
+  const tipoImovel = document.getElementById('tipoImovel').value;
+
+  const seq = ['stepTipoProp'];
+  if(tipoProp.indexOf('Jurídica') !== -1){
+    seq.push('stepDadosPJ','stepSocio');   // empresa + sócio principal
+  } else {
+    seq.push('stepDadosPF');               // padrão: pessoa física
+  }
+  seq.push('stepImovel');
+  if(TIPOS_APTO.includes(tipoImovel)) seq.push('stepApto');
+  seq.push('stepValores');
+  return seq;
 }
 
 function mostrarEtapa(i){
@@ -539,6 +886,9 @@ function mostrarEtapa(i){
   // progresso
   progress.style.display = 'block';
   progressFill.style.width = ((i+1)/seq.length*100) + '%';
+  // régua de fases
+  stepper.style.display = 'flex';
+  atualizarRegua(seq[i]);
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -557,6 +907,7 @@ function voltar(){
     document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
     welcome.classList.add('active');
     progress.style.display = 'none';
+    stepper.style.display = 'none';
     window.scrollTo({top:0,behavior:'smooth'});
   } else {
     mostrarEtapa(indice-1);
@@ -578,6 +929,10 @@ function validar(etapaEl){
     marcar(c, !!c.value.trim());
     if(!c.value.trim()) ok = false;
   });
+  // opção PF/PJ obrigatória (radio)
+  if(etapaEl.querySelector('input[type=radio]')){
+    if(!etapaEl.querySelector('input[type=radio]:checked')) ok = false;
+  }
   // e-mail precisa ter formato válido
   const email = etapaEl.querySelector('input[type=email]');
   if(email && email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)){
@@ -585,9 +940,11 @@ function validar(etapaEl){
   }
   // checkboxes obrigatórios (incluso no condomínio): ao menos 1
   if(etapaEl.querySelector('input[name=incluso]')){
-    const algum = etapaEl.querySelector('input[name=incluso]:checked');
-    if(!algum) ok = false;
+    if(!etapaEl.querySelector('input[name=incluso]:checked')) ok = false;
   }
+  // consentimento LGPD obrigatório (etapa final)
+  const consent = etapaEl.querySelector('#aceiteTermos');
+  if(consent && !consent.checked) ok = false;
 
   if(erroBox) erroBox.classList.toggle('show', !ok);
   return ok;
@@ -597,13 +954,40 @@ function marcar(campo, valido){
   campo.classList.toggle('invalido', !valido);
 }
 
-// Máscara simples do telefone: (00) 00000-0000
-document.getElementById('whatsapp').addEventListener('input', function(e){
-  let v = e.target.value.replace(/\D/g,'').slice(0,11);
-  if(v.length > 6)      v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
-  else if(v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
-  else if(v.length > 0) v = `(${v}`;
-  e.target.value = v;
+/* ===== Máscaras de digitação (telefone, CPF, CNPJ) ===== */
+function maskTel(v){
+  v = v.replace(/\D/g,'').slice(0,11);
+  if(v.length > 6)      return `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+  if(v.length > 2)      return `(${v.slice(0,2)}) ${v.slice(2)}`;
+  if(v.length > 0)      return `(${v}`;
+  return v;
+}
+function maskCpf(v){
+  v = v.replace(/\D/g,'').slice(0,11);
+  return v
+    .replace(/(\d{3})(\d)/,'$1.$2')
+    .replace(/(\d{3})(\d)/,'$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+}
+function maskCnpj(v){
+  v = v.replace(/\D/g,'').slice(0,14);
+  return v
+    .replace(/^(\d{2})(\d)/,'$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/,'.$1/$2')
+    .replace(/(\d{4})(\d)/,'$1-$2');
+}
+function maskCep(v){
+  v = v.replace(/\D/g,'').slice(0,8);
+  return v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
+}
+document.addEventListener('input', function(e){
+  const t = e.target;
+  if(!t.classList) return;
+  if(t.classList.contains('mask-tel'))      t.value = maskTel(t.value);
+  else if(t.classList.contains('mask-cpf')) t.value = maskCpf(t.value);
+  else if(t.classList.contains('mask-cnpj')) t.value = maskCnpj(t.value);
+  else if(t.classList.contains('mask-cep')) t.value = maskCep(t.value);
 });
 
 // Envio final
@@ -627,6 +1011,22 @@ async function enviar(){
       dados[chave] = valor;
     }
   });
+
+  /* ---- Compatibilidade com o Make atual ----
+     Copiamos o contato escolhido (PF ou PJ) de volta para os nomes
+     antigos, para que o cenário existente continue capturando o
+     essencial enquanto os campos novos não são mapeados. */
+  const ehPJ = tipoProprietario().indexOf('Jurídica') !== -1;
+  dados.nome_proprietario = ehPJ ? (dados.pj_razao || '')    : (dados.pf_nome || '');
+  dados.whatsapp          = ehPJ ? (dados.pj_telefone || '') : (dados.pf_whatsapp || '');
+  dados.email             = ehPJ ? (dados.pj_email || '')    : (dados.pf_email || '');
+
+  // Remonta o endereço do imóvel num só texto, mantendo o campo "endereco" que o Make já usa
+  const _comp = dados.endereco_complemento ? ' - ' + dados.endereco_complemento : '';
+  dados.endereco = `${dados.endereco_logradouro || ''}, ${dados.endereco_numero || ''}${_comp}, `
+                 + `${dados.endereco_bairro || ''}, ${dados.endereco_cidade || ''}/${dados.endereco_estado || ''}, `
+                 + `CEP ${dados.endereco_cep || ''}`;
+
   const params = new URLSearchParams(window.location.search);
   dados.parceiro = params.get('parceiro') || '';
   dados.data_envio = new Date().toLocaleString('pt-BR');
@@ -639,13 +1039,13 @@ async function enviar(){
         body: JSON.stringify(dados)
       });
     } else {
-      // Sem webhook ainda: só simula (pra você testar o visual)
       console.log('Dados que seriam enviados:', dados);
       await new Promise(r=>setTimeout(r,800));
     }
     // Mostra a tela de agradecimento
     document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
     progressFill.style.width = '100%';
+    stepper.style.display = 'none';
     thanks.classList.add('active');
     window.scrollTo({top:0,behavior:'smooth'});
   }catch(err){
