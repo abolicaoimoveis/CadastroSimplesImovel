@@ -73,7 +73,7 @@ body{
 }
 /* ===== LOGO =====
    Suba a imagem do logo no GitHub (mesmo lugar do index.html) com o nome
-   logo.png — ela aparece automaticamente . */
+   logo.png — ela aparece automaticamente aqui. */
 .logo-img{
   height:40px;
   width:auto;
@@ -410,7 +410,7 @@ select{
         <div class="linha">
           <div class="campo">
             <label>Data de nascimento <span class="req">*</span></label>
-            <input type="date" name="pf_nascimento" required>
+            <input type="tel" name="pf_nascimento" class="mask-data" placeholder="DD/MM/AAAA" required>
           </div>
           <div class="campo">
             <label>Estado civil <span class="req">*</span></label>
@@ -471,7 +471,7 @@ select{
           </div>
           <div class="campo">
             <label>Data de abertura <span class="req">*</span></label>
-            <input type="date" name="pj_abertura" required>
+            <input type="tel" name="pj_abertura" class="mask-data" placeholder="DD/MM/AAAA" required>
           </div>
         </div>
 
@@ -526,7 +526,7 @@ select{
         <div class="linha">
           <div class="campo">
             <label>Data de nascimento <span class="req">*</span></label>
-            <input type="date" name="so_nascimento" required>
+            <input type="tel" name="so_nascimento" class="mask-data" placeholder="DD/MM/AAAA" required>
           </div>
           <div class="campo">
             <label>Estado civil <span class="req">*</span></label>
@@ -803,7 +803,7 @@ select{
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            <p><span class="destaque">Toque para escolher</span> ou arraste o arquivo .</p>
+            <p><span class="destaque">Toque para escolher</span> ou arraste o arquivo aqui.</p>
             <input type="file" id="documento" accept="image/*,application/pdf">
           </label>
           <div class="doc-sel" id="docSelecionado">
@@ -1027,6 +1027,12 @@ function maskCep(v){
   v = v.replace(/\D/g,'').slice(0,8);
   return v.length > 5 ? `${v.slice(0,5)}-${v.slice(5)}` : v;
 }
+function maskData(v){
+  v = v.replace(/\D/g,'').slice(0,8);
+  if(v.length > 4) return `${v.slice(0,2)}/${v.slice(2,4)}/${v.slice(4)}`;
+  if(v.length > 2) return `${v.slice(0,2)}/${v.slice(2)}`;
+  return v;
+}
 document.addEventListener('input', function(e){
   const t = e.target;
   if(!t.classList) return;
@@ -1034,6 +1040,7 @@ document.addEventListener('input', function(e){
   else if(t.classList.contains('mask-cpf')) t.value = maskCpf(t.value);
   else if(t.classList.contains('mask-cnpj')) t.value = maskCnpj(t.value);
   else if(t.classList.contains('mask-cep')) t.value = maskCep(t.value);
+  else if(t.classList.contains('mask-data')) t.value = maskData(t.value);
 });
 
 /* ===== Documento: exibir arquivo escolhido e permitir remover ===== */
