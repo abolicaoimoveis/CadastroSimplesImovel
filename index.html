@@ -263,6 +263,35 @@ select{
 .contador .ctrl button:disabled{opacity:.35;cursor:not-allowed}
 .contador .ctrl b{min-width:34px;text-align:center;font-size:17px;font-weight:700}
 
+/* Sim / Não lado a lado */
+.radios.duas{grid-template-columns:1fr 1fr}
+
+/* ===== Opções "soltas": sem o fundo branco, mantendo a borda =====
+   Só nos Sim/Não e no CPF/CNPJ. Os itens do condomínio e o aceite da LGPD
+   continuam em cartão branco. A borda preserva o alvo de toque; ao marcar,
+   o fundo azul-claro mostra de relance o que foi escolhido. */
+.radios.solto .check{background:transparent}
+
+/* A classe .marcado é posta por JS. O :has(input:checked) do CSS original
+   não repinta em todo aparelho quando a marcação muda — em alguns webviews
+   a opção escolhida ficava sem nenhum destaque. */
+.check.marcado{border-color:var(--cor-destaque);background:rgba(2,48,71,.05)}
+.radios.solto .check.marcado{background:rgba(2,48,71,.06)}
+.check-aceite.marcado{background:#e2f2de;border-color:#3f9a52}
+
+/* Aceite da LGPD: verde só na caixa que precisa ser marcada */
+.check-aceite{align-items:flex-start;font-size:14px;line-height:1.45;
+  background:#eef7ec;border-color:var(--cor-verde)}
+.check-aceite input{margin-top:1px;accent-color:#3f9a52}
+.check-aceite a{color:var(--cor-destaque);font-weight:600}
+.check-aceite:has(input:checked){background:#e2f2de;border-color:#3f9a52}
+
+/* Envio do documento: bloco destacado, para não passar batido */
+.bloco-doc{background:#eaf1f5;border:1.5px solid #c3d5e0;border-radius:var(--raio);
+  padding:16px 16px 14px}
+.bloco-doc>label{color:var(--cor-destaque)}
+.bloco-doc .dropzone{background:var(--cor-superficie);border-color:#b6cbd8}
+
 /* ===== Bloco opcional, fechado por padrão ===== */
 .opcional{border:1.5px dashed var(--cor-borda);border-radius:var(--raio);
   padding:13px 15px;margin-bottom:20px;background:rgba(255,255,255,.55)}
@@ -554,7 +583,7 @@ select{
       <!-- ================= ETAPA 3: CONTATO ================= -->
       <section class="step" id="stepContato">
         <h2 class="etapa-titulo">Como falamos com você?</h2>
-        <p class="etapa-sub">Etapa 3 de 3 — as duas últimas perguntas.</p>
+        <p class="etapa-sub">Etapa 3 de 3 — as últimas perguntas.</p>
 
         <div class="campo">
           <label>Seu nome <span class="req">*</span></label>
@@ -567,9 +596,55 @@ select{
         </div>
 
         <div class="campo">
-          <div class="radios">
-            <label class="check"><input type="radio" name="proprietario_tipo" value="Pessoa Física (CPF)"> O imóvel está no meu CPF</label>
-            <label class="check"><input type="radio" name="proprietario_tipo" value="Pessoa Jurídica (CNPJ)"> Está no CNPJ de uma empresa</label>
+          <label>O imóvel está em nome de <span class="req">*</span></label>
+          <div class="radios duas solto">
+            <label class="check"><input type="radio" name="proprietario_tipo" value="Pessoa Física (CPF)"> CPF</label>
+            <label class="check"><input type="radio" name="proprietario_tipo" value="Pessoa Jurídica (CNPJ)"> CNPJ</label>
+          </div>
+        </div>
+
+        <!-- Só aparece depois da escolha. Rótulo, máscara e name acompanham. -->
+        <div class="campo" id="campoDocWrap" style="display:none">
+          <label id="rotuloDocNum">CPF</label>
+          <input type="text" id="campoDocNum" name="pf_cpf" class="mask-cpf" placeholder="000.000.000-00">
+          <span class="dica">Não é obrigatório. Se preferir, informe depois.</span>
+        </div>
+
+        <div class="campo">
+          <label>Você declara os valores recebidos de aluguel no seu Imposto de Renda (IRPF ou IRPJ)?</label>
+          <div class="radios duas solto">
+            <label class="check"><input type="radio" name="declara_ir" value="Sim"> Sim</label>
+            <label class="check"><input type="radio" name="declara_ir" value="Não"> Não</label>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Deseja impor alguma restrição ou exigência ao uso do imóvel durante a locação?</label>
+          <div class="radios duas solto">
+            <label class="check"><input type="radio" name="tem_restricao" value="Sim"> Sim</label>
+            <label class="check"><input type="radio" name="tem_restricao" value="Não"> Não</label>
+          </div>
+        </div>
+
+        <div class="campo" id="campoRestricao" style="display:none">
+          <label>Quais restrições ou exigências?</label>
+          <textarea name="restricao_qual" placeholder="Ex.: não aceita animais; máximo de 4 moradores; proibido reformar sem autorização."></textarea>
+        </div>
+
+        <div class="campo bloco-doc">
+          <label>Documento com foto (RG ou CNH)</label>
+          <span class="dica" style="margin-top:0;margin-bottom:8px">Foto ou PDF, para confirmar sua identidade. Não é obrigatório — pode enviar depois.</span>
+          <label class="dropzone" for="documento">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p><span class="destaque">Toque para escolher</span> ou arraste o arquivo aqui.</p>
+            <input type="file" id="documento" accept="image/*,application/pdf">
+          </label>
+          <div class="doc-sel" id="docSelecionado">
+            <span class="nome" id="docNome"></span>
+            <button type="button" id="docRemover" title="Remover">&times;</button>
           </div>
         </div>
 
@@ -582,36 +657,10 @@ select{
           </div>
         </details>
 
-        <!-- ===== Cadastro completo: tudo opcional, fechado por padrão =====
-             Adianta o que a Moralí pediria depois, por WhatsApp. Quem não
-             abrir manda a ficha do mesmo jeito. -->
+        <!-- ===== O que a Moralí pediria depois, para quem quiser adiantar ===== -->
         <details class="opcional">
           <summary>Quer adiantar o cadastro completo? (opcional)</summary>
           <span class="dica">Nada aqui é obrigatório. Se preferir, a Moralí pede depois pelo WhatsApp.</span>
-
-          <!-- Acompanha a escolha CPF/CNPJ feita acima: troca rótulo, máscara
-               e o name, para o Make receber pf_cpf OU pj_cnpj, nunca misturado. -->
-          <div class="campo">
-            <label id="rotuloDocNum">CPF</label>
-            <input type="text" id="campoDocNum" name="pf_cpf" class="mask-cpf" placeholder="000.000.000-00">
-          </div>
-
-          <div class="campo">
-            <label>Você declara os valores recebidos de aluguel no seu Imposto de Renda (IRPF ou IRPJ)?</label>
-            <div class="radios">
-              <label class="check"><input type="radio" name="declara_ir" value="Sim"> Sim</label>
-              <label class="check"><input type="radio" name="declara_ir" value="Não"> Não</label>
-            </div>
-          </div>
-
-          <div class="campo">
-            <label>Deseja impor alguma restrição ou exigência ao uso do imóvel durante a locação?</label>
-            <div class="radios">
-              <label class="check"><input type="radio" name="tem_restricao" value="Sim"> Sim</label>
-              <label class="check"><input type="radio" name="tem_restricao" value="Não"> Não</label>
-            </div>
-            <span class="dica">Se marcar "Sim", a Moralí conversa com você sobre quais.</span>
-          </div>
 
           <div class="campo">
             <label>Voltagem da energia elétrica</label>
@@ -624,63 +673,35 @@ select{
           </div>
 
           <div class="campo">
-            <label>Dados bancários para o repasse do aluguel</label>
-            <span class="dica" style="margin-top:0;margin-bottom:8px">É para onde a Moralí deposita o seu aluguel todo mês.</span>
-            <input type="text" name="banco_pix" placeholder="Chave PIX (CPF, celular, e-mail ou aleatória)">
-          </div>
-          <div class="linha">
-            <div class="campo">
-              <label>Banco</label>
-              <input type="text" name="banco_nome" placeholder="ex.: Itaú">
-            </div>
-            <div class="campo">
-              <label>Tipo de conta</label>
-              <select name="banco_tipo">
-                <option value="">Selecione</option>
-                <option>Conta corrente</option>
-                <option>Conta poupança</option>
-              </select>
-            </div>
-          </div>
-          <div class="linha">
-            <div class="campo">
-              <label>Agência</label>
-              <input type="text" name="banco_agencia" placeholder="0000">
-            </div>
-            <div class="campo">
-              <label>Conta com dígito</label>
-              <input type="text" name="banco_conta" placeholder="00000-0">
+            <label>Quem será responsável pelo pagamento do IPTU durante a locação?</label>
+            <div class="radios duas solto">
+              <label class="check"><input type="radio" name="iptu_responsavel" value="Proprietário"> Proprietário</label>
+              <label class="check"><input type="radio" name="iptu_responsavel" value="Inquilino"> Inquilino</label>
             </div>
           </div>
 
           <div class="campo">
-            <label>Documento com foto (RG ou CNH)</label>
-            <span class="dica" style="margin-top:0;margin-bottom:8px">Foto ou PDF, para confirmar sua identidade. Pode enviar depois.</span>
-            <label class="dropzone" for="documento">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
-              <p><span class="destaque">Toque para escolher</span> ou arraste o arquivo aqui.</p>
-              <input type="file" id="documento" accept="image/*,application/pdf">
-            </label>
-            <div class="doc-sel" id="docSelecionado">
-              <span class="nome" id="docNome"></span>
-              <button type="button" id="docRemover" title="Remover">&times;</button>
+            <label>Prazo do contrato: 36 meses, com permanência mínima de 12 meses</label>
+            <!-- Empilhado de propósito: "Não concordo, quero conversar" não
+                 cabe em meia largura no celular. -->
+            <div class="radios solto">
+              <label class="check"><input type="radio" name="prazo_aceite" value="Concordo"> Concordo</label>
+              <label class="check"><input type="radio" name="prazo_aceite" value="Não concordo, quero conversar"> Não concordo, quero conversar</label>
             </div>
+          </div>
+
+          <div class="campo">
+            <label>Chave PIX para o repasse do aluguel</label>
+            <input type="text" name="banco_pix" placeholder="CPF, celular, e-mail ou chave aleatória">
+            <span class="dica">É para onde a Moralí deposita o seu aluguel todo mês.</span>
           </div>
         </details>
 
-        <div class="aviso-lgpd">
-          Usamos seus dados só para avaliar o imóvel e falar com você. Tratamento
-          conforme a LGPD.
-        </div>
-
         <div class="campo">
-          <label class="check" style="align-items:flex-start;font-size:14px;line-height:1.45">
-            <input type="checkbox" id="aceiteTermos" name="aceite_lgpd" value="Aceito" style="margin-top:1px">
+          <label class="check check-aceite">
+            <input type="checkbox" id="aceiteTermos" name="aceite_lgpd" value="Aceito">
             <span>Li e concordo com o uso dos meus dados, conforme o
-              <a href="termo.html" target="_blank" rel="noopener" style="color:var(--cor-destaque);font-weight:600">Termo de Uso e Privacidade (LGPD)</a>.</span>
+              <a href="termo.html" target="_blank" rel="noopener">Termo de Uso e Privacidade (LGPD)</a>.</span>
           </label>
         </div>
 
@@ -690,7 +711,6 @@ select{
           <button type="button" class="btn btn-principal" id="btnEnviar" onclick="enviar()">Enviar cadastro</button>
         </div>
       </section>
-
     </form>
 
     <!-- ============================================================= -->
@@ -994,23 +1014,53 @@ document.addEventListener('input', function(e){
   else if(t.classList.contains('mask-data')) t.value = maskData(t.value);
 });
 
+/* ===== Destaque da opção escolhida =====
+   O CSS faz isso com :has(input:checked), mas há aparelho que não repinta
+   quando a marcação muda — a pessoa clicava e nada acontecia na tela.
+   Aqui a classe é posta na mão, e vale para radio e checkbox. */
+function pintarEscolhas(){
+  document.querySelectorAll('.check').forEach(l=>{
+    const i = l.querySelector('input');
+    if(i) l.classList.toggle('marcado', i.checked);
+  });
+}
+document.addEventListener('change', e=>{
+  if(e.target.matches && e.target.matches('input[type=radio], input[type=checkbox]')) pintarEscolhas();
+});
+document.addEventListener('DOMContentLoaded', pintarEscolhas);
+
 /* ===== CPF ou CNPJ (opcional) — segue a escolha feita nos botões =====
    Sem isto o campo ficaria com máscara de CPF e cortaria um CNPJ em 11
    dígitos, gravando um número quebrado. */
 document.addEventListener('DOMContentLoaded', () => {
   const campo  = document.getElementById('campoDocNum');
   const rotulo = document.getElementById('rotuloDocNum');
-  if(!campo || !rotulo) return;
-  document.querySelectorAll('input[name=proprietario_tipo]').forEach(r=>{
-    r.addEventListener('change', ()=>{
-      const ehPJ = r.value.indexOf('Jurídica') !== -1;
-      rotulo.textContent   = ehPJ ? 'CNPJ' : 'CPF';
-      campo.name           = ehPJ ? 'pj_cnpj' : 'pf_cpf';
-      campo.placeholder    = ehPJ ? '00.000.000/0000-00' : '000.000.000-00';
-      campo.className      = ehPJ ? 'mask-cnpj' : 'mask-cpf';
-      campo.value          = '';
+  const caixa  = document.getElementById('campoDocWrap');
+  if(campo && rotulo && caixa){
+    document.querySelectorAll('input[name=proprietario_tipo]').forEach(r=>{
+      r.addEventListener('change', ()=>{
+        const ehPJ = r.value.indexOf('Jurídica') !== -1;
+        rotulo.textContent = ehPJ ? 'CNPJ' : 'CPF';
+        campo.name         = ehPJ ? 'pj_cnpj' : 'pf_cpf';
+        campo.placeholder  = ehPJ ? '00.000.000/0000-00' : '000.000.000-00';
+        campo.className    = ehPJ ? 'mask-cnpj' : 'mask-cpf';
+        campo.value        = '';
+        caixa.style.display = '';      // só aparece depois da escolha
+      });
     });
-  });
+  }
+
+  /* "Deseja impor alguma restrição?" — o texto longo só abre no "Sim" */
+  const cxRestricao = document.getElementById('campoRestricao');
+  if(cxRestricao){
+    document.querySelectorAll('input[name=tem_restricao]').forEach(r=>{
+      r.addEventListener('change', ()=>{
+        const sim = r.value === 'Sim';
+        cxRestricao.style.display = sim ? '' : 'none';
+        if(!sim) cxRestricao.querySelector('textarea').value = '';
+      });
+    });
+  }
 });
 
 /* ===== Documento: exibir arquivo escolhido e permitir remover ===== */
