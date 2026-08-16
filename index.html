@@ -401,10 +401,6 @@ select{
             <label>CPF <span class="req">*</span></label>
             <input type="text" name="pf_cpf" class="mask-cpf" placeholder="000.000.000-00" required>
           </div>
-          <div class="campo">
-            <label>RG <span class="req">*</span></label>
-            <input type="text" name="pf_rg" placeholder="Número do RG" required>
-          </div>
         </div>
 
         <div class="linha">
@@ -516,10 +512,6 @@ select{
           <div class="campo">
             <label>CPF <span class="req">*</span></label>
             <input type="text" name="so_cpf" class="mask-cpf" placeholder="000.000.000-00" required>
-          </div>
-          <div class="campo">
-            <label>RG <span class="req">*</span></label>
-            <input type="text" name="so_rg" placeholder="Número do RG" required>
           </div>
         </div>
 
@@ -747,53 +739,19 @@ select{
           <input type="text" name="valor_aluguel" required>
         </div>
 
-        <div class="campo">
-          <label>Quem paga o IPTU durante a locação? <span class="req">*</span></label>
-          <select name="iptu_responsavel" required>
-            <option value="">Favor selecionar</option>
-            <option>Proprietário</option>
-            <option>Inquilino</option>
-          </select>
-        </div>
+
+
 
         <div class="campo">
-          <label>Prazo do contrato: 30 meses, com permanência mínima de 12 meses <span class="req">*</span></label>
-          <select name="prazo_contrato" required>
-            <option value="">Favor selecionar</option>
-            <option>Concordo</option>
-            <option>Discordo</option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label>Unidade Consumidora (água e luz)</label>
-          <span class="dica" style="margin-top:0;margin-bottom:8px">Facilita a transferência de titularidade para o futuro locatário.</span>
-          <div class="linha">
-            <div class="campo" style="margin-bottom:0">
-              <input type="text" name="uc_agua" placeholder="Nº da água">
-            </div>
-            <div class="campo" style="margin-bottom:0">
-              <input type="text" name="uc_energia" placeholder="Nº da energia">
-            </div>
+            <label>Mais alguma coisa que a gente precisa saber?</label>
+            <textarea name="observacao" rows="5"></textarea>
+            <span class="dica">Use este espaço para o que não coube nos campos acima. Por exemplo:
+              diferenciais do imóvel (móveis planejados, área gourmet, energia solar, piscina);
+              restrições de uso (não aceita animais, limite de ocupantes); ou qualquer observação
+              sobre o imóvel, o condomínio ou a locação.</span>
           </div>
-        </div>
 
-        <div class="campo">
-          <label>Deseja destacar algum diferencial do imóvel?</label>
-          <textarea name="diferencial"></textarea>
-          <span class="dica">Ex.: móveis planejados, área gourmet, energia solar, piscina...</span>
-        </div>
 
-        <div class="campo">
-          <label>Quer impor alguma restrição ou exigência ao uso do imóvel?</label>
-          <textarea name="restricoes"></textarea>
-          <span class="dica">Ex.: proibição de animais, limite de ocupantes, não alugar para estudantes...</span>
-        </div>
-
-        <div class="campo">
-          <label>Observação ou comentário</label>
-          <textarea name="observacao"></textarea>
-        </div>
 
         <div class="campo">
           <label>Documento do proprietário <span class="dica" style="display:inline;font-weight:400">(opcional)</span></label>
@@ -862,8 +820,8 @@ select{
 
   <!-- Rodapé institucional -->
   <footer class="rodape">
-    RC GESTÃO IMOBILIÁRIA LTDA<br>
-    CNPJ 07.697.516/0001-86 · Desde 2005
+    MORALÍ GESTÃO IMOBILIÁRIA LTDA<br>
+    CNPJ 07.697.516/0001-86 · CRECI 54547-J
   </footer>
 
 </div>
