@@ -833,6 +833,14 @@ select{
     <!-- ============================================================= -->
     <!-- ====== PONTO DE CONFIGURAÇÃO 3: TEXTO DE AGRADECIMENTO ======= -->
     <!-- ============================================================= -->
+    <!-- ARMADILHA DE ROBÔ. Fica fora da tela e sem rótulo visível:
+         gente nunca preenche, robô que varre campos preenche sempre.
+         `tabindex=-1` e `autocomplete=off` para não pegar quem navega
+         por teclado nem o preenchimento automático do navegador. -->
+    <input type="text" id="confirme-email" name="confirme-email" tabindex="-1"
+           autocomplete="off" aria-hidden="true"
+           style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+
     <section class="screen" id="thanks">
       <div class="hero-icone">
         <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -841,6 +849,12 @@ select{
       </div>
       <h1>Cadastro enviado!</h1>
       <p>Recebemos as informações do seu imóvel e em breve entraremos em contato pelo WhatsApp.</p>
+      <p style="font-size:15px">Seu protocolo é
+        <b id="protocolo" style="letter-spacing:1px">—</b>.<br>
+        <span style="font-size:13px;opacity:.75">Guarde esse número: é por ele que
+        encontramos seu cadastro se você precisar falar com a gente.</span></p>
+      <p><a href="https://wa.me/5517996808900" style="color:inherit">
+        Falar com a Moralí no WhatsApp</a></p>
       <p>Obrigado por confiar na Moralí para cuidar do seu patrimônio.</p>
     </section>
 
@@ -858,16 +872,40 @@ select{
 /* =====================================================================
    ====== PONTO DE CONFIGURAÇÃO 4: LINK DO MAKE (WEBHOOK) ==============
    ===================================================================== */
-const WEBHOOK_URL = "https://hook.us2.make.com/2kbqo3mtjpw56buop1g43s6zjvfvk3bh";
-
 /* =====================================================================
-   ====== PONTO DE CONFIGURAÇÃO 5: SUPABASE (upload do documento) ======
-   Troque apenas a CHAVE pela sua "anon public" (Settings → API Keys).
-   NUNCA use a service_role aqui.
+   ====== CONFIGURAÇÃO — v2, agosto/2026 =========================
+   O webhook do Make saiu. Ele estava ESCRITO NESTA PÁGINA e não pedia
+   autenticação nenhuma: quem abrisse o código-fonte copiava a URL e
+   injetava ficha falsa, que disparava e-mail em nome da Moralí para os
+   parceiros.
+   Agora a página fala com o banco por duas portas que só sabem fazer
+   uma coisa cada (ficha_iniciar e ficha_enviar). A chave abaixo é
+   PÚBLICA de propósito — é a mesma que o CRM usa no navegador, e ela
+   sozinha não abre tabela nenhuma.
    ===================================================================== */
-const SUPABASE_URL      = "https://gcoikoeiuwaygjjwedjp.supabase.co";
-const SUPABASE_BUCKET   = "documentos-proprietarios";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdjb2lrb2VpdXdheWdqandlZGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTAyODQsImV4cCI6MjA5NDE4NjI4NH0.B_DXIbf-asPDhe_lVG7pKT1jMLuDmqsLopmfsEjYfZs";
+const SUPABASE_URL = "https://gcoikoeiuwaygjjwedjp.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ChTppJgR6vesRWLG_9rQ5A_HZgNv6Kn";
+const TIPO_FICHA   = "Proprietário";
+const BUCKET       = "documentos-proprietarios";
+
+/** quando a página abriu — serve para saber se quem enviou é gente */
+const ABERTO_EM = Date.now();
+
+async function rpc(funcao, args){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${funcao}`, {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY,
+               'Content-Type': 'application/json' },
+    body: JSON.stringify(args)
+  });
+  const txt = await r.text();
+  if(!r.ok){
+    let msg = txt;
+    try { msg = (JSON.parse(txt).message) || txt; } catch(e){}
+    throw new Error(msg);
+  }
+  return txt ? JSON.parse(txt) : null;
+}
 
 /* ---- daqui pra baixo é a "mágica"; normalmente você não mexe ---- */
 
@@ -1064,21 +1102,27 @@ if(inputDoc){
 
 /* Envia o documento direto para o Supabase (bucket privado) e
    devolve o nome do arquivo guardado. Não joga a imagem na planilha. */
-async function enviarDocumento(file){
+async function enviarDocumento(file, token){
+  // O arquivo cai em {token}/nome. É o token que autoriza a gravação —
+  // sem ele o balde recusa, e é isso que impede alguém de usar o
+  // Storage da Moralí como hospedagem.
   const ext = (file.name.split('.').pop() || 'dat').toLowerCase();
-  const caminho = `documento_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-  const url = `${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${caminho}`;
-  const resp = await fetch(url, {
-    method:'POST',
-    headers:{
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-      'Content-Type': file.type || 'application/octet-stream'
-    },
+  const limpo = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-60);
+  const caminho = `${token}/${Date.now()}_${limpo || 'documento.' + ext}`;
+  const resp = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${caminho}`, {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY,
+               'Content-Type': file.type || 'application/octet-stream' },
     body: file
   });
-  if(!resp.ok) throw new Error('Falha no upload: ' + resp.status);
-  return caminho;
+  if(!resp.ok){
+    const t = await resp.text();
+    throw new Error(resp.status === 413 ? 'o arquivo passa de 10 MB'
+                  : (resp.status === 415 ? 'esse tipo de arquivo não é aceito'
+                  : ('erro ' + resp.status + ' ' + t.slice(0,80))));
+  }
+  return { bucket: BUCKET, caminho, nome: file.name,
+           tamanho: file.size, tipo: file.type || '' };
 }
 
 // Envio final
@@ -1136,17 +1180,45 @@ async function enviar(){
   dados.data_envio = new Date().toLocaleString('pt-BR');
 
   try{
-    if(WEBHOOK_URL){
-      await fetch(WEBHOOK_URL, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(dados)
-      });
-    } else {
-      console.log('Dados que seriam enviados:', dados);
-      await new Promise(r=>setTimeout(r,800));
+    // 1) abre a ficha e recebe o token e o PROTOCOLO
+    const inicio = await rpc('ficha_iniciar', {
+      p_tipo: TIPO_FICHA,
+      p_parceiro: dados.parceiro
+    });
+
+    // 2) sobe o documento, se houver. FALHA AQUI NÃO É MAIS SILENCIOSA:
+    //    antes gravava "falha no envio" e mostrava "Cadastro enviado!"
+    //    do mesmo jeito — a pessoa ia embora achando que mandou.
+    const anexos = [];
+    if(inputDoc && inputDoc.files.length){
+      try{
+        anexos.push(await enviarDocumento(inputDoc.files[0], inicio.token));
+      }catch(e){
+        const seguir = confirm(
+          'Não consegui enviar o documento (' + e.message + ').\n\n' +
+          'Quer enviar o cadastro mesmo assim? Você poderá mandar o ' +
+          'documento depois pelo WhatsApp.');
+        if(!seguir){
+          btn.disabled = false;
+          btn.innerHTML = 'Enviar cadastro';
+          return;
+        }
+      }
     }
-    // Mostra a tela de agradecimento
+
+    // 3) fecha a ficha
+    await rpc('ficha_enviar', {
+      p_token: inicio.token,
+      p_dados: dados,
+      p_anexos: anexos,
+      p_armadilha: (document.getElementById('confirme-email') || {}).value || '',
+      p_segundos: Math.round((Date.now() - ABERTO_EM) / 1000)
+    });
+
+    localStorage.removeItem(RASCUNHO);   // deu certo: o rascunho não serve mais
+
+    const alvo = document.getElementById('protocolo');
+    if(alvo) alvo.textContent = inicio.protocolo || '';
     document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
     progressFill.style.width = '100%';
     stepper.style.display = 'none';
@@ -1155,9 +1227,85 @@ async function enviar(){
   }catch(err){
     btn.disabled = false;
     btn.innerHTML = 'Enviar cadastro';
-    alert('Não conseguimos enviar agora. Verifique sua internet e tente novamente.');
+    alert('Não conseguimos enviar agora: ' + (err.message || '') +
+          '\n\nSuas respostas ficaram guardadas neste aparelho — ' +
+          'é só tentar de novo.');
   }
 }
+
+/* =====================================================================
+   RASCUNHO NO APARELHO
+   Formulário de 7 etapas em celular: basta uma ligação entrar para a
+   pessoa perder tudo e não voltar. Guardar o que ela digitou custa
+   quatro linhas e é a diferença entre recomeçar e continuar.
+   Nada sai do aparelho — é o localStorage do próprio navegador dela.
+   ===================================================================== */
+const RASCUNHO = 'morali-ficha-proprietario';
+
+function guardarRascunho(){
+  try{
+    const fd = new FormData(document.getElementById('form'));
+    const o = {}; fd.forEach((v,k)=>{ if(k !== 'confirme-email') o[k] = v; });
+    localStorage.setItem(RASCUNHO, JSON.stringify({ em: Date.now(), d: o }));
+  }catch(e){}
+}
+
+function lerRascunho(){
+  try{
+    const g = JSON.parse(localStorage.getItem(RASCUNHO) || 'null');
+    if(!g || !g.d) return;
+    // rascunho de mais de 7 dias é lixo, não ajuda ninguém
+    if(Date.now() - g.em > 7*24*3600*1000){ localStorage.removeItem(RASCUNHO); return; }
+    let achou = 0;
+    for(const [k,v] of Object.entries(g.d)){
+      const el = document.querySelector(`[name="${k}"]`);
+      if(el && !el.value && v){ el.value = v; achou++; }
+    }
+    if(achou > 3){
+      const aviso = document.createElement('div');
+      aviso.style.cssText = 'background:#EDF3F6;padding:10px 14px;border-radius:8px;'
+                          + 'font-size:13.5px;margin-bottom:14px';
+      aviso.innerHTML = 'Recuperamos o que você já tinha preenchido. '
+        + '<a href="#" id="limpar-rascunho" style="color:inherit">Começar do zero</a>';
+      const alvo = document.querySelector('.screen.active') || document.body;
+      alvo.prepend(aviso);
+      document.getElementById('limpar-rascunho').onclick = e => {
+        e.preventDefault(); localStorage.removeItem(RASCUNHO); location.reload();
+      };
+    }
+  }catch(e){}
+}
+
+document.addEventListener('input', guardarRascunho);
+document.addEventListener('DOMContentLoaded', lerRascunho);
+
+/* =====================================================================
+   O CEP PREENCHE O ENDEREÇO
+   Sete campos digitados à mão viram um. Se o serviço não responder, a
+   pessoa digita como antes — nada trava por causa disso.
+   ===================================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  const cep = document.querySelector('[name="endereco_cep"]');
+  if(!cep) return;
+  cep.addEventListener('blur', async () => {
+    const so = (cep.value || '').replace(/\D/g, '');
+    if(so.length !== 8) return;
+    try{
+      const r = await fetch(`https://viacep.com.br/ws/${so}/json/`);
+      const d = await r.json();
+      if(d.erro) return;
+      const por = { endereco_logradouro: d.logradouro, endereco_bairro: d.bairro,
+                    endereco_cidade: d.localidade, endereco_estado: d.uf };
+      for(const [nome, valor] of Object.entries(por)){
+        const el = document.querySelector(`[name="${nome}"]`);
+        if(el && valor && !el.value) el.value = valor;
+      }
+      const num = document.querySelector('[name="endereco_numero"]');
+      if(num && !num.value) num.focus();
+      guardarRascunho();
+    }catch(e){ /* sem internet no serviço de CEP: segue digitando */ }
+  });
+});
 </script>
 </body>
 </html>
