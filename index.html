@@ -454,7 +454,7 @@ select{
 
         <!-- Contadores. O valor vai nos hidden abaixo, com os names de sempre. -->
         <div class="contadores" id="contadores">
-          <div class="contador" data-campo="dormitorios">
+          <div class="contador" data-campo="dormitorios" data-so="residencial" data-padrao="1">
             <span>Dormitórios</span>
             <span class="ctrl">
               <button type="button" data-passo="-1" aria-label="menos um dormitório">−</button>
@@ -462,7 +462,7 @@ select{
               <button type="button" data-passo="1" aria-label="mais um dormitório">+</button>
             </span>
           </div>
-          <div class="contador" data-campo="banheiros">
+          <div class="contador" data-campo="banheiros" data-so="comodo" data-padrao="1">
             <span>Banheiros</span>
             <span class="ctrl">
               <button type="button" data-passo="-1" aria-label="menos um banheiro">−</button>
@@ -470,7 +470,7 @@ select{
               <button type="button" data-passo="1" aria-label="mais um banheiro">+</button>
             </span>
           </div>
-          <div class="contador" data-campo="suites">
+          <div class="contador" data-campo="suites" data-so="residencial" data-padrao="0">
             <span>Suítes</span>
             <span class="ctrl">
               <button type="button" data-passo="-1" aria-label="menos uma suíte">−</button>
@@ -478,7 +478,7 @@ select{
               <button type="button" data-passo="1" aria-label="mais uma suíte">+</button>
             </span>
           </div>
-          <div class="contador" data-campo="garagem">
+          <div class="contador" data-campo="garagem" data-so="comodo" data-padrao="1">
             <span>Vagas de garagem</span>
             <span class="ctrl">
               <button type="button" data-passo="-1" aria-label="menos uma vaga">−</button>
@@ -502,47 +502,40 @@ select{
           <summary>Quer detalhar mais? (opcional)</summary>
           <span class="dica">Se você não souber agora, a Moralí confere na vistoria.</span>
 
-          <div class="campo">
-            <label>Voltagem da energia elétrica</label>
-            <select name="voltagem">
-              <option value="">Não sei / prefiro não informar</option>
-              <option>110v</option>
-              <option>220v</option>
-              <option>110v e 220v</option>
-            </select>
-          </div>
+          <!-- Só aparece para Apartamento e Kitnet. Casa não tem andar nem elevador. -->
+          <div id="blocoApto" style="display:none">
+            <div class="linha">
+              <div class="campo">
+                <label>Qual andar?</label>
+                <input type="text" name="andar" placeholder="ex.: 3º">
+              </div>
+              <div class="campo">
+                <label>Tem elevador?</label>
+                <input type="text" name="elevador" placeholder="quantos">
+              </div>
+            </div>
 
-          <div class="linha">
             <div class="campo">
-              <label>Qual andar?</label>
-              <input type="text" name="andar" placeholder="só para apartamento">
+              <label>Valor mensal do condomínio (R$)</label>
+              <input type="text" name="valor_condominio" placeholder="R$ 0,00">
             </div>
+
             <div class="campo">
-              <label>Tem elevador?</label>
-              <input type="text" name="elevador" placeholder="quantos">
+              <label>O que está incluso no condomínio?</label>
+              <div class="radios">
+                <label class="check"><input type="checkbox" name="incluso" value="Água"> Água</label>
+                <label class="check"><input type="checkbox" name="incluso" value="Gás encanado"> Gás encanado</label>
+                <label class="check"><input type="checkbox" name="incluso" value="Portaria 24h"> Portaria 24h</label>
+                <label class="check"><input type="checkbox" name="incluso" value="Limpeza/manutenção"> Limpeza/manutenção</label>
+                <label class="check"><input type="checkbox" name="incluso" value="Coleta de lixo"> Coleta de lixo</label>
+                <label class="check"><input type="checkbox" name="incluso" value="Sistema de segurança"> Sistema de segurança</label>
+              </div>
             </div>
-          </div>
 
-          <div class="campo">
-            <label>Valor mensal do condomínio (R$)</label>
-            <input type="text" name="valor_condominio" placeholder="R$ 0,00">
-          </div>
-
-          <div class="campo">
-            <label>O que está incluso no condomínio?</label>
-            <div class="radios">
-              <label class="check"><input type="checkbox" name="incluso" value="Água"> Água</label>
-              <label class="check"><input type="checkbox" name="incluso" value="Gás encanado"> Gás encanado</label>
-              <label class="check"><input type="checkbox" name="incluso" value="Portaria 24h"> Portaria 24h</label>
-              <label class="check"><input type="checkbox" name="incluso" value="Limpeza/manutenção"> Limpeza/manutenção</label>
-              <label class="check"><input type="checkbox" name="incluso" value="Coleta de lixo"> Coleta de lixo</label>
-              <label class="check"><input type="checkbox" name="incluso" value="Sistema de segurança"> Sistema de segurança</label>
+            <div class="campo">
+              <label>Possui área de lazer? Como é?</label>
+              <textarea name="area_lazer" placeholder="piscina, churrasqueira, salão de festas..."></textarea>
             </div>
-          </div>
-
-          <div class="campo">
-            <label>Possui área de lazer? Como é?</label>
-            <textarea name="area_lazer" placeholder="piscina, churrasqueira, salão de festas..."></textarea>
           </div>
 
           <div class="campo">
@@ -586,6 +579,95 @@ select{
             <label>E-mail</label>
             <input type="email" name="pf_email" placeholder="exemplo@exemplo.com">
             <span class="dica">Opcional. A conversa acontece pelo WhatsApp.</span>
+          </div>
+        </details>
+
+        <!-- ===== Cadastro completo: tudo opcional, fechado por padrão =====
+             Adianta o que a Moralí pediria depois, por WhatsApp. Quem não
+             abrir manda a ficha do mesmo jeito. -->
+        <details class="opcional">
+          <summary>Quer adiantar o cadastro completo? (opcional)</summary>
+          <span class="dica">Nada aqui é obrigatório. Se preferir, a Moralí pede depois pelo WhatsApp.</span>
+
+          <!-- Acompanha a escolha CPF/CNPJ feita acima: troca rótulo, máscara
+               e o name, para o Make receber pf_cpf OU pj_cnpj, nunca misturado. -->
+          <div class="campo">
+            <label id="rotuloDocNum">CPF</label>
+            <input type="text" id="campoDocNum" name="pf_cpf" class="mask-cpf" placeholder="000.000.000-00">
+          </div>
+
+          <div class="campo">
+            <label>Você declara os valores recebidos de aluguel no seu Imposto de Renda (IRPF ou IRPJ)?</label>
+            <div class="radios">
+              <label class="check"><input type="radio" name="declara_ir" value="Sim"> Sim</label>
+              <label class="check"><input type="radio" name="declara_ir" value="Não"> Não</label>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label>Deseja impor alguma restrição ou exigência ao uso do imóvel durante a locação?</label>
+            <div class="radios">
+              <label class="check"><input type="radio" name="tem_restricao" value="Sim"> Sim</label>
+              <label class="check"><input type="radio" name="tem_restricao" value="Não"> Não</label>
+            </div>
+            <span class="dica">Se marcar "Sim", a Moralí conversa com você sobre quais.</span>
+          </div>
+
+          <div class="campo">
+            <label>Voltagem da energia elétrica</label>
+            <select name="voltagem">
+              <option value="">Não sei / prefiro não informar</option>
+              <option>110v</option>
+              <option>220v</option>
+              <option>110v e 220v</option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label>Dados bancários para o repasse do aluguel</label>
+            <span class="dica" style="margin-top:0;margin-bottom:8px">É para onde a Moralí deposita o seu aluguel todo mês.</span>
+            <input type="text" name="banco_pix" placeholder="Chave PIX (CPF, celular, e-mail ou aleatória)">
+          </div>
+          <div class="linha">
+            <div class="campo">
+              <label>Banco</label>
+              <input type="text" name="banco_nome" placeholder="ex.: Itaú">
+            </div>
+            <div class="campo">
+              <label>Tipo de conta</label>
+              <select name="banco_tipo">
+                <option value="">Selecione</option>
+                <option>Conta corrente</option>
+                <option>Conta poupança</option>
+              </select>
+            </div>
+          </div>
+          <div class="linha">
+            <div class="campo">
+              <label>Agência</label>
+              <input type="text" name="banco_agencia" placeholder="0000">
+            </div>
+            <div class="campo">
+              <label>Conta com dígito</label>
+              <input type="text" name="banco_conta" placeholder="00000-0">
+            </div>
+          </div>
+
+          <div class="campo">
+            <label>Documento com foto (RG ou CNH)</label>
+            <span class="dica" style="margin-top:0;margin-bottom:8px">Foto ou PDF, para confirmar sua identidade. Pode enviar depois.</span>
+            <label class="dropzone" for="documento">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <p><span class="destaque">Toque para escolher</span> ou arraste o arquivo aqui.</p>
+              <input type="file" id="documento" accept="image/*,application/pdf">
+            </label>
+            <div class="doc-sel" id="docSelecionado">
+              <span class="nome" id="docNome"></span>
+              <button type="button" id="docRemover" title="Remover">&times;</button>
+            </div>
           </div>
         </details>
 
@@ -709,6 +791,60 @@ function atualizarRegua(stepId){
   });
 }
 
+/* ===== O que cada tipo de imóvel pergunta =====
+   Sala comercial fica em prédio: tem andar, elevador e condomínio.
+   Terreno não tem cômodo nenhum. Comercial não tem dormitório nem suíte. */
+const TIPOS_APTO        = ['Apartamento','Kitnet','Sala comercial'];
+const TIPOS_RESIDENCIAIS = ['Casa','Apartamento','Kitnet','Sobrado','Chácara'];
+const TIPOS_SEM_COMODO   = ['Terreno'];
+
+/* Esconde o que não faz sentido e ZERA o valor escondido — senão quem
+   escolhe Apartamento, conta 3 dormitórios e depois troca para Terreno
+   manda um terreno com 3 quartos. */
+document.addEventListener('DOMContentLoaded', () => {
+  const tipo  = document.getElementById('tipoImovel');
+  const bloco = document.getElementById('blocoApto');
+  if(!tipo) return;
+
+  function ajustar(){
+    const t = tipo.value;
+    const residencial = TIPOS_RESIDENCIAIS.includes(t);
+    const temComodo   = t !== '' && !TIPOS_SEM_COMODO.includes(t);
+
+    // andar / elevador / condomínio / área de lazer
+    if(bloco){
+      const mostraApto = TIPOS_APTO.includes(t);
+      bloco.style.display = mostraApto ? '' : 'none';
+      if(!mostraApto){
+        bloco.querySelectorAll('input[type=text], textarea').forEach(c=> c.value = '');
+        bloco.querySelectorAll('input[type=checkbox]').forEach(c=> c.checked = false);
+      }
+    }
+
+    // contadores
+    document.querySelectorAll('.contador').forEach(linha=>{
+      const grupo  = linha.dataset.so;                 // "residencial" ou "comodo"
+      const mostra = grupo === 'residencial' ? residencial : temComodo;
+      const alvo   = document.querySelector(`input[type=hidden][name="${linha.dataset.campo}"]`);
+      linha.style.display = mostra ? '' : 'none';
+      if(!alvo) return;
+      if(mostra){
+        // volta ao padrão se a pessoa ainda não mexeu neste contador —
+        // senão quem passa por Terreno e escolhe Casa recebe 0 dormitórios
+        if(!linha.dataset.tocado) alvo.value = linha.dataset.padrao;
+      }else{
+        alvo.value = '0';
+      }
+      linha.querySelector('b').textContent = alvo.value;
+      const menos = linha.querySelector('button[data-passo="-1"]');
+      if(menos) menos.disabled = Number(alvo.value) <= 0;
+    });
+  }
+
+  tipo.addEventListener('change', ajustar);
+  ajustar();
+});
+
 let indice = 0; // posição atual dentro da sequência de etapas
 
 // A ordem agora é fixa: o imóvel primeiro, o dono por último.
@@ -770,9 +906,9 @@ function validar(etapaEl){
     marcar(c, !!c.value.trim());
     if(!c.value.trim()) ok = false;
   });
-  // opção PF/PJ obrigatória (radio)
-  if(etapaEl.querySelector('input[type=radio]')){
-    if(!etapaEl.querySelector('input[type=radio]:checked')) ok = false;
+  // opção CPF/CNPJ obrigatória. Os outros Sim/Não da etapa são opcionais.
+  if(etapaEl.querySelector('input[name=proprietario_tipo]')){
+    if(!etapaEl.querySelector('input[name=proprietario_tipo]:checked')) ok = false;
   }
   // e-mail precisa ter formato válido
   const email = etapaEl.querySelector('input[type=email]');
@@ -807,6 +943,7 @@ document.querySelectorAll('.contador').forEach(linha=>{
     b.addEventListener('click', ()=>{
       const novo = Math.min(20, Math.max(0, Number(alvo.value) + Number(b.dataset.passo)));
       alvo.value = novo;
+      linha.dataset.tocado = '1';   // a partir daqui o valor é da pessoa, não o padrão
       pinta();
       guardarRascunho();
     });
@@ -855,6 +992,25 @@ document.addEventListener('input', function(e){
   else if(t.classList.contains('mask-cnpj')) t.value = maskCnpj(t.value);
   else if(t.classList.contains('mask-cep')) t.value = maskCep(t.value);
   else if(t.classList.contains('mask-data')) t.value = maskData(t.value);
+});
+
+/* ===== CPF ou CNPJ (opcional) — segue a escolha feita nos botões =====
+   Sem isto o campo ficaria com máscara de CPF e cortaria um CNPJ em 11
+   dígitos, gravando um número quebrado. */
+document.addEventListener('DOMContentLoaded', () => {
+  const campo  = document.getElementById('campoDocNum');
+  const rotulo = document.getElementById('rotuloDocNum');
+  if(!campo || !rotulo) return;
+  document.querySelectorAll('input[name=proprietario_tipo]').forEach(r=>{
+    r.addEventListener('change', ()=>{
+      const ehPJ = r.value.indexOf('Jurídica') !== -1;
+      rotulo.textContent   = ehPJ ? 'CNPJ' : 'CPF';
+      campo.name           = ehPJ ? 'pj_cnpj' : 'pf_cpf';
+      campo.placeholder    = ehPJ ? '00.000.000/0000-00' : '000.000.000-00';
+      campo.className      = ehPJ ? 'mask-cnpj' : 'mask-cpf';
+      campo.value          = '';
+    });
+  });
 });
 
 /* ===== Documento: exibir arquivo escolhido e permitir remover ===== */
