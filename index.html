@@ -1147,19 +1147,6 @@ async function enviar(){
   dados.endereco = `${dados.endereco_logradouro || ''}, ${dados.endereco_numero || ''}${_comp}, `
                  + `${dados.endereco_bairro || ''}, ${dados.endereco_cidade || ''}/${dados.endereco_estado}`;
 
-  // Documento (opcional): se houver arquivo, envia ao Supabase antes do cadastro
-  let docCaminho = '', docStatus = 'sem documento';
-  if(inputDoc && inputDoc.files.length){
-    try{
-      docCaminho = await enviarDocumento(inputDoc.files[0]);
-      docStatus  = 'enviado';
-    }catch(e){
-      docStatus  = 'falha no envio';
-    }
-  }
-  dados.documento_arquivo = docCaminho;
-  dados.documento_status  = docStatus;
-
   const params = new URLSearchParams(window.location.search);
   dados.parceiro = params.get('parceiro') || '';
   dados.data_envio = new Date().toLocaleString('pt-BR');
@@ -1190,6 +1177,12 @@ async function enviar(){
         }
       }
     }
+
+    // O status do documento sai do envio que vale — o de cima, com o
+    // token. Antes era escrito antes de qualquer upload acontecer.
+    dados.documento_status  = (!inputDoc || !inputDoc.files.length) ? 'sem documento'
+                            : (anexos.length ? 'enviado' : 'falha no envio');
+    dados.documento_arquivo = anexos.length ? anexos[0].caminho : '';
 
     // 3) fecha a ficha
     await rpc('ficha_enviar', {
