@@ -247,6 +247,33 @@ select{
 .consent-check a{color:var(--cor-destaque);font-weight:600}
 
 /* Aviso de privacidade no rodapé das etapas com dados pessoais */
+/* ===== Contador: dormitórios, banheiros, suítes, vagas =====
+   Substitui quatro <select> por quatro linhas de toque. O valor real
+   continua indo num <input type="hidden"> com o MESMO name de antes. */
+.contadores{display:grid;gap:10px;margin-bottom:20px}
+.contador{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:var(--cor-superficie);border:1.5px solid var(--cor-borda);
+  border-radius:var(--raio);padding:11px 12px 11px 16px}
+.contador>span{font-weight:600;font-size:15px}
+.contador .ctrl{display:flex;align-items:center;gap:4px}
+.contador .ctrl button{width:38px;height:38px;border-radius:10px;
+  border:1.5px solid var(--cor-borda);background:var(--cor-fundo);
+  font-size:20px;font-weight:700;color:var(--cor-destaque);cursor:pointer;
+  line-height:1;font-family:inherit;padding:0}
+.contador .ctrl button:disabled{opacity:.35;cursor:not-allowed}
+.contador .ctrl b{min-width:34px;text-align:center;font-size:17px;font-weight:700}
+
+/* ===== Bloco opcional, fechado por padrão ===== */
+.opcional{border:1.5px dashed var(--cor-borda);border-radius:var(--raio);
+  padding:13px 15px;margin-bottom:20px;background:rgba(255,255,255,.55)}
+.opcional summary{cursor:pointer;font-weight:600;font-size:14.5px;
+  color:var(--cor-destaque);list-style:none}
+.opcional summary::-webkit-details-marker{display:none}
+.opcional summary::before{content:"+ ";font-weight:700}
+.opcional[open] summary::before{content:"− "}
+.opcional .campo{margin-top:16px;margin-bottom:16px}
+.opcional .campo:last-of-type{margin-bottom:4px}
+
 .aviso-lgpd{
   background:#eef7ec;
   border:1px solid var(--cor-verde);
@@ -337,9 +364,9 @@ select{
 
   <!-- Régua de fases -->
   <div class="stepper" id="stepper" style="display:none">
-    <div class="step-item" data-phase="0"><span class="step-dot"></span><span class="step-label">Proprietário</span></div>
-    <div class="step-item" data-phase="1"><span class="step-dot"></span><span class="step-label">Imóvel</span></div>
-    <div class="step-item" data-phase="2"><span class="step-dot"></span><span class="step-label">Valores</span></div>
+    <div class="step-item" data-phase="0"><span class="step-dot"></span><span class="step-label">Endereço</span></div>
+    <div class="step-item" data-phase="1"><span class="step-dot"></span><span class="step-label">O imóvel</span></div>
+    <div class="step-item" data-phase="2"><span class="step-dot"></span><span class="step-label">Contato</span></div>
   </div>
 
   <div class="conteudo">
@@ -365,421 +392,217 @@ select{
     <!-- ===================== FORMULÁRIO ===================== -->
     <form id="form" novalidate>
 
-      <!-- ETAPA 0: Tipo de proprietário (primeira pergunta) -->
-      <section class="step" id="stepTipoProp">
-        <h2 class="etapa-titulo">O proprietário do imóvel é</h2>
-        <p class="etapa-sub">Escolha uma opção para continuar.</p>
-
-        <div class="radios">
-          <label class="check"><input type="radio" name="proprietario_tipo" value="Pessoa Física (CPF)"> Pessoa Física (CPF)</label>
-          <label class="check"><input type="radio" name="proprietario_tipo" value="Pessoa Jurídica (CNPJ)"> Pessoa Jurídica (CNPJ)</label>
-        </div>
-
-        <div class="erro-msg" data-erro>Selecione uma opção para continuar.</div>
-        <div class="nav">
-          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
-          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
-        </div>
-      </section>
-
-      <!-- ETAPA 1A (PESSOA FÍSICA): Dados do proprietário -->
-      <section class="step" id="stepDadosPF">
-        <h2 class="etapa-titulo">Dados do proprietário</h2>
-        <p class="etapa-sub">Pessoa física.</p>
-
-        <div class="aviso-lgpd">
-          Pedimos seu documento e dados pessoais para confirmar sua identidade no cadastro. Tratamento conforme a LGPD — detalhes no Termo de Uso, no fim do formulário.
-        </div>
-
-        <div class="campo">
-          <label>Nome completo <span class="req">*</span></label>
-          <input type="text" name="pf_nome" placeholder="Nome e sobrenome" required>
-        </div>
-
-        <div class="linha">
-          <div class="campo">
-            <label>CPF <span class="req">*</span></label>
-            <input type="text" name="pf_cpf" class="mask-cpf" placeholder="000.000.000-00" required>
-          </div>
-        </div>
-
-        <div class="linha">
-          <div class="campo">
-            <label>Data de nascimento <span class="req">*</span></label>
-            <input type="tel" name="pf_nascimento" class="mask-data" placeholder="DD/MM/AAAA" required>
-          </div>
-          <div class="campo">
-            <label>Estado civil <span class="req">*</span></label>
-            <select name="pf_estado_civil" required>
-              <option value="">Selecione</option>
-              <option>Solteiro(a)</option>
-              <option>Casado(a)</option>
-              <option>União estável</option>
-              <option>Divorciado(a)</option>
-              <option>Separado(a)</option>
-              <option>Viúvo(a)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="linha">
-          <div class="campo">
-            <label>WhatsApp <span class="req">*</span></label>
-            <input type="tel" name="pf_whatsapp" class="mask-tel" placeholder="(00) 00000-0000" required>
-          </div>
-          <div class="campo">
-            <label>E-mail <span class="req">*</span></label>
-            <input type="email" name="pf_email" placeholder="exemplo@exemplo.com" required>
-          </div>
-        </div>
-
-        <div class="campo">
-          <label>Endereço residencial <span class="req">*</span></label>
-          <textarea name="pf_endereco" placeholder="Rua, bairro, cidade, CEP" required></textarea>
-        </div>
-
-        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
-        <div class="nav">
-          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
-          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
-        </div>
-      </section>
-
-      <!-- ETAPA 1B (PESSOA JURÍDICA): Dados da empresa -->
-      <section class="step" id="stepDadosPJ">
-        <h2 class="etapa-titulo">Dados do proprietário</h2>
-        <p class="etapa-sub">Pessoa jurídica — dados da empresa.</p>
-
-        <div class="campo">
-          <label>Razão social <span class="req">*</span></label>
-          <input type="text" name="pj_razao" required>
-        </div>
-
-        <div class="campo">
-          <label>Ramo de atividade <span class="req">*</span></label>
-          <input type="text" name="pj_ramo" required>
-        </div>
-
-        <div class="linha">
-          <div class="campo">
-            <label>CNPJ <span class="req">*</span></label>
-            <input type="text" name="pj_cnpj" class="mask-cnpj" placeholder="00.000.000/0000-00" required>
-          </div>
-          <div class="campo">
-            <label>Data de abertura <span class="req">*</span></label>
-            <input type="tel" name="pj_abertura" class="mask-data" placeholder="DD/MM/AAAA" required>
-          </div>
-        </div>
-
-        <div class="linha">
-          <div class="campo">
-            <label>E-mail da empresa <span class="req">*</span></label>
-            <input type="email" name="pj_email" placeholder="exemplo@exemplo.com" required>
-          </div>
-          <div class="campo">
-            <label>Telefone da empresa <span class="req">*</span></label>
-            <input type="tel" name="pj_telefone" class="mask-tel" placeholder="(00) 00000-0000" required>
-          </div>
-        </div>
-
-        <div class="campo">
-          <label>Endereço da empresa <span class="req">*</span></label>
-          <textarea name="pj_endereco" placeholder="Rua, bairro, cidade, CEP" required></textarea>
-        </div>
-
-        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
-        <div class="nav">
-          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
-          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
-        </div>
-      </section>
-
-      <!-- ETAPA 1C (PESSOA JURÍDICA): Sócio principal -->
-      <section class="step" id="stepSocio">
-        <h2 class="etapa-titulo">Sócio principal</h2>
-        <p class="etapa-sub">Dados do responsável pela empresa.</p>
-
-        <div class="aviso-lgpd">
-          Pedimos os dados do sócio principal para confirmar a identidade do responsável. Tratamento conforme a LGPD — detalhes no Termo de Uso, no fim do formulário.
-        </div>
-
-        <div class="campo">
-          <label>Nome completo <span class="req">*</span></label>
-          <input type="text" name="so_nome" placeholder="Nome e sobrenome" required>
-        </div>
-
-        <div class="linha">
-          <div class="campo">
-            <label>CPF <span class="req">*</span></label>
-            <input type="text" name="so_cpf" class="mask-cpf" placeholder="000.000.000-00" required>
-          </div>
-        </div>
-
-        <div class="linha">
-          <div class="campo">
-            <label>Data de nascimento <span class="req">*</span></label>
-            <input type="tel" name="so_nascimento" class="mask-data" placeholder="DD/MM/AAAA" required>
-          </div>
-          <div class="campo">
-            <label>Estado civil <span class="req">*</span></label>
-            <select name="so_estado_civil" required>
-              <option value="">Selecione</option>
-              <option>Solteiro(a)</option>
-              <option>Casado(a)</option>
-              <option>União estável</option>
-              <option>Divorciado(a)</option>
-              <option>Separado(a)</option>
-              <option>Viúvo(a)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="linha">
-          <div class="campo">
-            <label>WhatsApp <span class="req">*</span></label>
-            <input type="tel" name="so_whatsapp" class="mask-tel" placeholder="(00) 00000-0000" required>
-          </div>
-          <div class="campo">
-            <label>E-mail <span class="req">*</span></label>
-            <input type="email" name="so_email" placeholder="exemplo@exemplo.com" required>
-          </div>
-        </div>
-
-        <div class="campo">
-          <label>Endereço residencial do sócio <span class="req">*</span></label>
-          <textarea name="so_endereco" placeholder="Rua, bairro, cidade, CEP" required></textarea>
-        </div>
-
-        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
-        <div class="nav">
-          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
-          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
-        </div>
-      </section>
-
-      <!-- ETAPA 2: Sobre o imóvel -->
+      <!-- ================= ETAPA 1: ONDE FICA O IMÓVEL ================= -->
       <section class="step" id="stepImovel">
-        <h2 class="etapa-titulo">Sobre o imóvel</h2>
-        <p class="etapa-sub">Características principais.</p>
+        <h2 class="etapa-titulo">Onde fica o imóvel?</h2>
+        <p class="etapa-sub">Etapa 1 de 3</p>
 
         <div class="campo">
-          <label>Endereço do imóvel <span class="req">*</span></label>
-          <input type="text" name="endereco_logradouro" placeholder="Rua / Avenida" required>
+          <label>Endereço <span class="req">*</span></label>
+          <input type="text" name="endereco_logradouro" placeholder="Rua Cafelândia" required>
         </div>
 
         <div class="linha">
           <div class="campo">
             <label>Número <span class="req">*</span></label>
-            <input type="text" name="endereco_numero" placeholder="123 ou S/N" required>
+            <input type="text" name="endereco_numero" placeholder="153" required>
           </div>
           <div class="campo">
             <label>Complemento</label>
-            <input type="text" name="endereco_complemento" placeholder="Apto, bloco...">
+            <input type="text" name="endereco_complemento" placeholder="apto 12">
           </div>
-        </div>
-
-        <div class="campo">
-          <label>Bairro <span class="req">*</span></label>
-          <input type="text" name="endereco_bairro" required>
         </div>
 
         <div class="linha">
           <div class="campo">
-            <label>Cidade <span class="req">*</span></label>
-            <input type="text" name="endereco_cidade" required>
+            <label>Bairro <span class="req">*</span></label>
+            <input type="text" name="endereco_bairro" placeholder="Vila Celso" required>
           </div>
           <div class="campo">
-            <label>Estado <span class="req">*</span></label>
-            <select name="endereco_estado" required>
-              <option value="">UF</option>
-              <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
-              <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
-              <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
-              <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
-              <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
-              <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
-              <option>SP</option><option>SE</option><option>TO</option>
-            </select>
+            <label>Cidade <span class="req">*</span></label>
+            <input type="text" name="endereco_cidade" value="Catanduva" required>
           </div>
         </div>
 
-        <div class="campo">
-          <label>CEP <span class="req">*</span></label>
-          <input type="text" name="endereco_cep" class="mask-cep" placeholder="00000-000" required>
+        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
+        <div class="nav">
+          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
+          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
         </div>
+      </section>
+
+      <!-- ================= ETAPA 2: COMO É O IMÓVEL ================= -->
+      <section class="step" id="stepPerfilImovel">
+        <h2 class="etapa-titulo">Como é o imóvel?</h2>
+        <p class="etapa-sub">Etapa 2 de 3</p>
 
         <div class="campo">
           <label>Tipo do imóvel <span class="req">*</span></label>
           <select name="tipo_imovel" id="tipoImovel" required>
-            <option value="">Favor selecionar</option>
-            <option>Casa térrea</option>
-            <option>Sobrado</option>
+            <option value="">Selecione</option>
+            <option>Casa</option>
             <option>Apartamento</option>
             <option>Kitnet</option>
-            <option>Casa de fundos</option>
-            <option>Edícula</option>
-            <option>Barracão/Galpão</option>
-            <option>Sala Comercial</option>
-            <option>Salão</option>
+            <option>Sobrado</option>
             <option>Chácara</option>
+            <option>Sala comercial</option>
+            <option>Salão comercial</option>
+            <option>Barracão</option>
+            <option>Terreno</option>
           </select>
         </div>
 
-        <div class="linha">
+        <!-- Contadores. O valor vai nos hidden abaixo, com os names de sempre. -->
+        <div class="contadores" id="contadores">
+          <div class="contador" data-campo="dormitorios">
+            <span>Dormitórios</span>
+            <span class="ctrl">
+              <button type="button" data-passo="-1" aria-label="menos um dormitório">−</button>
+              <b>1</b>
+              <button type="button" data-passo="1" aria-label="mais um dormitório">+</button>
+            </span>
+          </div>
+          <div class="contador" data-campo="banheiros">
+            <span>Banheiros</span>
+            <span class="ctrl">
+              <button type="button" data-passo="-1" aria-label="menos um banheiro">−</button>
+              <b>1</b>
+              <button type="button" data-passo="1" aria-label="mais um banheiro">+</button>
+            </span>
+          </div>
+          <div class="contador" data-campo="suites">
+            <span>Suítes</span>
+            <span class="ctrl">
+              <button type="button" data-passo="-1" aria-label="menos uma suíte">−</button>
+              <b>0</b>
+              <button type="button" data-passo="1" aria-label="mais uma suíte">+</button>
+            </span>
+          </div>
+          <div class="contador" data-campo="garagem">
+            <span>Vagas de garagem</span>
+            <span class="ctrl">
+              <button type="button" data-passo="-1" aria-label="menos uma vaga">−</button>
+              <b>1</b>
+              <button type="button" data-passo="1" aria-label="mais uma vaga">+</button>
+            </span>
+          </div>
+        </div>
+        <input type="hidden" name="dormitorios" value="1">
+        <input type="hidden" name="banheiros"   value="1">
+        <input type="hidden" name="suites"      value="0">
+        <input type="hidden" name="garagem"     value="1">
+
+        <div class="campo">
+          <label>Quanto você quer de aluguel? <span class="req">*</span></label>
+          <input type="text" name="valor_aluguel" placeholder="R$ 0,00" required>
+          <span class="dica">Um valor aproximado já serve. A Moralí avalia e conversa com você.</span>
+        </div>
+
+        <details class="opcional">
+          <summary>Quer detalhar mais? (opcional)</summary>
+          <span class="dica">Se você não souber agora, a Moralí confere na vistoria.</span>
+
           <div class="campo">
-            <label>Dormitórios <span class="req">*</span></label>
-            <select name="dormitorios" required>
-              <option value="">Selecionar</option>
-              <option>01</option><option>02</option><option>03</option><option>04</option><option>05</option>
+            <label>Voltagem da energia elétrica</label>
+            <select name="voltagem">
+              <option value="">Não sei / prefiro não informar</option>
+              <option>110v</option>
+              <option>220v</option>
+              <option>110v e 220v</option>
             </select>
           </div>
+
+          <div class="linha">
+            <div class="campo">
+              <label>Qual andar?</label>
+              <input type="text" name="andar" placeholder="só para apartamento">
+            </div>
+            <div class="campo">
+              <label>Tem elevador?</label>
+              <input type="text" name="elevador" placeholder="quantos">
+            </div>
+          </div>
+
           <div class="campo">
-            <label>Banheiros <span class="req">*</span></label>
-            <select name="banheiros" required>
-              <option value="">Selecionar</option>
-              <option>01</option><option>02</option><option>03</option><option>04</option><option>05</option>
-            </select>
+            <label>Valor mensal do condomínio (R$)</label>
+            <input type="text" name="valor_condominio" placeholder="R$ 0,00">
           </div>
-        </div>
 
-        <div class="campo">
-          <label>Possui suítes? Quantas? <span class="req">*</span></label>
-          <select name="suites" required>
-            <option value="">Favor selecionar</option>
-            <option>Não possui</option>
-            <option>01</option><option>02</option><option>03</option><option>04</option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label>Garagem/Vagas</label>
-          <select name="garagem">
-            <option value="">Favor selecionar</option>
-            <option>Não possui garagem</option>
-            <option>Garagem somente para moto</option>
-            <option>01 vaga para carro</option>
-            <option>02 vagas para carros</option>
-            <option>03 vagas para carros</option>
-            <option>04 vagas para carros</option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label>Voltagem da energia elétrica <span class="req">*</span></label>
-          <select name="voltagem" required>
-            <option value="">Favor selecionar</option>
-            <option>Somente 110v</option>
-            <option>Somente 220v</option>
-            <option>110v + 220v</option>
-            <option>Trifásico</option>
-            <option>Não sei a voltagem</option>
-          </select>
-        </div>
-
-        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
-        <div class="nav">
-          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
-          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
-        </div>
-      </section>
-
-      <!-- ETAPA 3 (CONDICIONAL): só aparece para Apartamento e Kitnet -->
-      <section class="step" id="stepApto">
-        <h2 class="etapa-titulo">Apartamento e condomínio</h2>
-        <p class="etapa-sub">Aparece só para apartamento e kitnet.</p>
-
-        <div class="linha">
           <div class="campo">
-            <label>Qual andar? <span class="req">*</span></label>
-            <input type="text" name="andar" data-cond-req>
+            <label>O que está incluso no condomínio?</label>
+            <div class="radios">
+              <label class="check"><input type="checkbox" name="incluso" value="Água"> Água</label>
+              <label class="check"><input type="checkbox" name="incluso" value="Gás encanado"> Gás encanado</label>
+              <label class="check"><input type="checkbox" name="incluso" value="Portaria 24h"> Portaria 24h</label>
+              <label class="check"><input type="checkbox" name="incluso" value="Limpeza/manutenção"> Limpeza/manutenção</label>
+              <label class="check"><input type="checkbox" name="incluso" value="Coleta de lixo"> Coleta de lixo</label>
+              <label class="check"><input type="checkbox" name="incluso" value="Sistema de segurança"> Sistema de segurança</label>
+            </div>
           </div>
+
           <div class="campo">
-            <label>Tem elevador? Quantos?</label>
-            <input type="text" name="elevador">
+            <label>Possui área de lazer? Como é?</label>
+            <textarea name="area_lazer" placeholder="piscina, churrasqueira, salão de festas..."></textarea>
           </div>
-        </div>
 
-        <div class="campo">
-          <label>Valor mensal do condomínio (R$)</label>
-          <input type="text" name="valor_condominio" placeholder="se aplicável">
-        </div>
-
-        <div class="campo">
-          <label>O que está incluso no condomínio? <span class="req">*</span></label>
-          <div class="checks">
-            <label class="check"><input type="checkbox" name="incluso" value="Água"> Água</label>
-            <label class="check"><input type="checkbox" name="incluso" value="Gás encanado"> Gás encanado</label>
-            <label class="check"><input type="checkbox" name="incluso" value="Portaria 24h"> Portaria 24h</label>
-            <label class="check"><input type="checkbox" name="incluso" value="Limpeza/manutenção"> Limpeza/manutenção</label>
-            <label class="check"><input type="checkbox" name="incluso" value="Coleta de lixo"> Coleta de lixo</label>
-            <label class="check"><input type="checkbox" name="incluso" value="Sistema de segurança"> Sistema de segurança</label>
-            <label class="check"><input type="checkbox" name="incluso" value="Outros"> Outros</label>
-          </div>
-        </div>
-
-        <div class="campo">
-          <label>Possui área de lazer? Como é?</label>
-          <textarea name="area_lazer"></textarea>
-        </div>
-
-        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
-        <div class="nav">
-          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
-          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
-        </div>
-      </section>
-
-      <!-- ETAPA 4: Valores e detalhes -->
-      <section class="step" id="stepValores">
-        <h2 class="etapa-titulo">Valores e detalhes</h2>
-        <p class="etapa-sub">Últimas informações.</p>
-
-        <div class="campo">
-          <label>Valor total do aluguel desejado (R$) <span class="req">*</span></label>
-          <input type="text" name="valor_aluguel" required>
-        </div>
-
-
-
-
-        <div class="campo">
+          <div class="campo">
             <label>Mais alguma coisa que a gente precisa saber?</label>
-            <textarea name="observacao" rows="5"></textarea>
-            <span class="dica">Use este espaço para o que não coube nos campos acima. Por exemplo:
-              diferenciais do imóvel (móveis planejados, área gourmet, energia solar, piscina);
-              restrições de uso (não aceita animais, limite de ocupantes); ou qualquer observação
-              sobre o imóvel, o condomínio ou a locação.</span>
+            <textarea name="observacao"></textarea>
           </div>
+        </details>
 
+        <div class="erro-msg" data-erro>Preencha os campos obrigatórios para continuar.</div>
+        <div class="nav">
+          <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
+          <button type="button" class="btn btn-principal" onclick="avancar()">Avançar</button>
+        </div>
+      </section>
 
+      <!-- ================= ETAPA 3: CONTATO ================= -->
+      <section class="step" id="stepContato">
+        <h2 class="etapa-titulo">Como falamos com você?</h2>
+        <p class="etapa-sub">Etapa 3 de 3 — as duas últimas perguntas.</p>
 
         <div class="campo">
-          <label>Documento do proprietário <span class="dica" style="display:inline;font-weight:400">(opcional)</span></label>
-          <span class="dica" style="margin-top:0;margin-bottom:8px">Foto ou PDF do RG ou CNH, para confirmar sua identidade. Pode enviar depois, se preferir.</span>
-          <label class="dropzone" for="documento">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-            <p><span class="destaque">Toque para escolher</span> ou arraste o arquivo aqui.</p>
-            <input type="file" id="documento" accept="image/*,application/pdf">
-          </label>
-          <div class="doc-sel" id="docSelecionado">
-            <span class="nome" id="docNome"></span>
-            <button type="button" id="docRemover" title="Remover">&times;</button>
+          <label>Seu nome <span class="req">*</span></label>
+          <input type="text" name="pf_nome" placeholder="Nome e sobrenome" required>
+        </div>
+
+        <div class="campo">
+          <label>Seu WhatsApp <span class="req">*</span></label>
+          <input type="tel" name="pf_whatsapp" class="mask-tel" placeholder="(00) 00000-0000" required>
+        </div>
+
+        <div class="campo">
+          <div class="radios">
+            <label class="check"><input type="radio" name="proprietario_tipo" value="Pessoa Física (CPF)"> O imóvel está no meu CPF</label>
+            <label class="check"><input type="radio" name="proprietario_tipo" value="Pessoa Jurídica (CNPJ)"> Está no CNPJ de uma empresa</label>
           </div>
         </div>
 
-        <!-- Consentimento LGPD: obrigatório para enviar -->
+        <details class="opcional">
+          <summary>E-mail, se quiser receber por escrito</summary>
+          <div class="campo">
+            <label>E-mail</label>
+            <input type="email" name="pf_email" placeholder="exemplo@exemplo.com">
+            <span class="dica">Opcional. A conversa acontece pelo WhatsApp.</span>
+          </div>
+        </details>
+
+        <div class="aviso-lgpd">
+          Usamos seus dados só para avaliar o imóvel e falar com você. Tratamento
+          conforme a LGPD.
+        </div>
+
         <div class="campo">
-          <label class="check consent-check">
-            <input type="checkbox" id="aceiteTermos" name="aceite_lgpd" value="Aceito">
+          <label class="check" style="align-items:flex-start;font-size:14px;line-height:1.45">
+            <input type="checkbox" id="aceiteTermos" name="aceite_lgpd" value="Aceito" style="margin-top:1px">
             <span>Li e concordo com o uso dos meus dados, conforme o
-              <a href="termo.html" target="_blank">Termo de Uso e Privacidade (LGPD)</a>.</span>
+              <a href="termo.html" target="_blank" rel="noopener" style="color:var(--cor-destaque);font-weight:600">Termo de Uso e Privacidade (LGPD)</a>.</span>
           </label>
         </div>
 
-        <div class="erro-msg" data-erro>Preencha os campos obrigatórios e aceite o Termo para continuar.</div>
+        <div class="erro-msg" data-erro>Preencha os campos obrigatórios e aceite o termo para enviar.</div>
         <div class="nav">
           <button type="button" class="btn btn-secundario" onclick="voltar()">Voltar</button>
           <button type="button" class="btn btn-principal" id="btnEnviar" onclick="enviar()">Enviar cadastro</button>
@@ -871,9 +694,9 @@ const stepper      = document.getElementById('stepper');
 
 // A qual fase da régua cada etapa pertence
 const FASE = {
-  stepTipoProp:0, stepDadosPF:0, stepDadosPJ:0, stepSocio:0,
-  stepImovel:1,  stepApto:1,
-  stepValores:2
+  stepImovel:0,
+  stepPerfilImovel:1,
+  stepContato:2
 };
 
 // Atualiza a régua de fases conforme a etapa atual
@@ -886,32 +709,12 @@ function atualizarRegua(stepId){
   });
 }
 
-// Quais tipos de imóvel mostram a etapa de apartamento/condomínio
-const TIPOS_APTO = ['Apartamento','Kitnet'];
-
 let indice = 0; // posição atual dentro da sequência de etapas
 
-// Lê a opção PF/PJ marcada
-function tipoProprietario(){
-  const r = document.querySelector('input[name=proprietario_tipo]:checked');
-  return r ? r.value : '';
-}
-
-// Monta a ordem das etapas, conforme PF/PJ e tipo do imóvel.
+// A ordem agora é fixa: o imóvel primeiro, o dono por último.
+// Quem preenche fala do que veio falar; o contato fica para o fim.
 function sequencia(){
-  const tipoProp   = tipoProprietario();
-  const tipoImovel = document.getElementById('tipoImovel').value;
-
-  const seq = ['stepTipoProp'];
-  if(tipoProp.indexOf('Jurídica') !== -1){
-    seq.push('stepDadosPJ','stepSocio');   // empresa + sócio principal
-  } else {
-    seq.push('stepDadosPF');               // padrão: pessoa física
-  }
-  seq.push('stepImovel');
-  if(TIPOS_APTO.includes(tipoImovel)) seq.push('stepApto');
-  seq.push('stepValores');
-  return seq;
+  return ['stepImovel','stepPerfilImovel','stepContato'];
 }
 
 function mostrarEtapa(i){
@@ -976,10 +779,6 @@ function validar(etapaEl){
   if(email && email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)){
     marcar(email,false); ok=false;
   }
-  // checkboxes obrigatórios (incluso no condomínio): ao menos 1
-  if(etapaEl.querySelector('input[name=incluso]')){
-    if(!etapaEl.querySelector('input[name=incluso]:checked')) ok = false;
-  }
   // consentimento LGPD obrigatório (etapa final)
   const consent = etapaEl.querySelector('#aceiteTermos');
   if(consent && !consent.checked) ok = false;
@@ -991,6 +790,29 @@ function validar(etapaEl){
 function marcar(campo, valido){
   campo.classList.toggle('invalido', !valido);
 }
+
+/* ===== Contadores (dormitórios, banheiros, suítes, vagas) =====
+   Cada + / − escreve no <input type="hidden"> de mesmo name, então o
+   FormData continua saindo igual ao dos <select> de antes. */
+document.querySelectorAll('.contador').forEach(linha=>{
+  const nome  = linha.dataset.campo;
+  const alvo  = document.querySelector(`input[type=hidden][name="${nome}"]`);
+  const visor = linha.querySelector('b');
+  const menos = linha.querySelector('button[data-passo="-1"]');
+  function pinta(){
+    visor.textContent = alvo.value;
+    menos.disabled = Number(alvo.value) <= 0;
+  }
+  linha.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const novo = Math.min(20, Math.max(0, Number(alvo.value) + Number(b.dataset.passo)));
+      alvo.value = novo;
+      pinta();
+      guardarRascunho();
+    });
+  });
+  pinta();
+});
 
 /* ===== Máscaras de digitação (telefone, CPF, CNPJ) ===== */
 function maskTel(v){
@@ -1105,16 +927,19 @@ async function enviar(){
      Copiamos o contato escolhido (PF ou PJ) de volta para os nomes
      antigos, para que o cenário existente continue capturando o
      essencial enquanto os campos novos não são mapeados. */
-  const ehPJ = tipoProprietario().indexOf('Jurídica') !== -1;
-  dados.nome_proprietario = ehPJ ? (dados.pj_razao || '')    : (dados.pf_nome || '');
-  dados.whatsapp          = ehPJ ? (dados.pj_telefone || '') : (dados.pf_whatsapp || '');
-  dados.email             = ehPJ ? (dados.pj_email || '')    : (dados.pf_email || '');
+  // O contato agora é um só, na etapa final, valha PF ou PJ.
+  dados.nome_proprietario = dados.pf_nome      || '';
+  dados.whatsapp          = dados.pf_whatsapp  || '';
+  dados.email             = dados.pf_email     || '';
 
   // Remonta o endereço do imóvel num só texto, mantendo o campo "endereco" que o Make já usa
+  // Não pedimos mais estado nem CEP: o estado é sempre SP e o CEP a Moralí
+  // descobre pelo endereço. Os campos seguem no envio para o Make não quebrar.
+  dados.endereco_estado = dados.endereco_estado || 'SP';
+  dados.endereco_cep    = dados.endereco_cep    || '';
   const _comp = dados.endereco_complemento ? ' - ' + dados.endereco_complemento : '';
   dados.endereco = `${dados.endereco_logradouro || ''}, ${dados.endereco_numero || ''}${_comp}, `
-                 + `${dados.endereco_bairro || ''}, ${dados.endereco_cidade || ''}/${dados.endereco_estado || ''}, `
-                 + `CEP ${dados.endereco_cep || ''}`;
+                 + `${dados.endereco_bairro || ''}, ${dados.endereco_cidade || ''}/${dados.endereco_estado}`;
 
   // Documento (opcional): se houver arquivo, envia ao Supabase antes do cadastro
   let docCaminho = '', docStatus = 'sem documento';
