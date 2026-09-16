@@ -1155,7 +1155,19 @@ async function enviar(){
     // 1) abre a ficha e recebe o token e o PROTOCOLO
     const inicio = await rpc('ficha_iniciar', {
       p_tipo: TIPO_FICHA,
-      p_parceiro: dados.parceiro
+      p_parceiro: dados.parceiro,
+      // DE QUEM É ESTA PÁGINA. Desde que existe mais de uma empresa no
+      // CRM, a porta pública se recusa a adivinhar a imobiliária — e
+      // ficou 13 dias recusando tudo, porque ninguém dizia.
+      //
+      // Quem responde é o DOMÍNIO, conferido contra um mapa no banco.
+      // Nos endereços da Moralí o domínio já basta, e o ?i= é ignorado
+      // (se discordar, a ficha é recusada em vez de ir para a casa
+      // errada). O ?i= existe para o dia do endereço genérico, que
+      // serve várias imobiliárias sem mostrar a URL da Moralí: lá o
+      // domínio não identifica ninguém e o apelido é obrigatório.
+      p_origem: location.hostname,
+      p_apelido: params.get('i') || null
     });
 
     // 2) sobe o documento, se houver. FALHA AQUI NÃO É MAIS SILENCIOSA:
