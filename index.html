@@ -532,7 +532,7 @@ select{
 
         <div class="campo">
           <label>Quanto você quer de aluguel? <span class="req">*</span></label>
-          <input type="text" name="valor_aluguel" placeholder="R$ 0,00" required>
+          <input type="text" name="valor_aluguel" class="mask-moeda" inputmode="numeric" placeholder="R$ 0,00" required>
           <span class="dica">Um valor aproximado já serve. A Moralí avalia e conversa com você.</span>
         </div>
 
@@ -1013,6 +1013,20 @@ function maskData(v){
   if(v.length > 2) return `${v.slice(0,2)}/${v.slice(2)}`;
   return v;
 }
+/* 22/09/2026 — DINHEIRO. Enche da direita para a esquerda, pelos centavos:
+   9 → R$ 0,09 · 90 → R$ 0,90 · 900 → R$ 9,00 · 90000 → R$ 900,00.
+   Sem isto o campo era texto solto: alguém digitou "90000" querendo
+   R$ 900,00 e a ficha gravou noventa mil. Agora a vírgula aparece
+   enquanto se digita, e o que está na tela é o que vai ser gravado. */
+function maskMoeda(v){
+  const d = String(v || '').replace(/\D/g,'').slice(0,11);  // até 999.999.999,99
+  // só zeros = vazio: é assim que apagar tecla a tecla chega ao campo
+  // limpo (senão trava em "R$ 0,00", que ainda passaria no obrigatório)
+  if(!d || /^0+$/.test(d)) return '';
+  const n   = d.replace(/^0+(?=\d{3})/,'').padStart(3,'0');
+  const int = n.slice(0,-2).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return `R$ ${int},${n.slice(-2)}`;
+}
 document.addEventListener('input', function(e){
   const t = e.target;
   if(!t.classList) return;
@@ -1021,6 +1035,7 @@ document.addEventListener('input', function(e){
   else if(t.classList.contains('mask-cnpj')) t.value = maskCnpj(t.value);
   else if(t.classList.contains('mask-cep')) t.value = maskCep(t.value);
   else if(t.classList.contains('mask-data')) t.value = maskData(t.value);
+  else if(t.classList.contains('mask-moeda')) t.value = maskMoeda(t.value);
 });
 
 /* ===== Destaque da opção escolhida =====
