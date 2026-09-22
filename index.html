@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Cadastro de Imóvel — Moralí</title>
+<title>Cadastro de Imóvel</title>
 
 <!-- Fonte oficial da Moralí: Outfit -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,7 +13,7 @@
 <style>
 /* =====================================================================
    ====== PONTO DE CONFIGURAÇÃO 1: CORES E LOGO ========================
-   Cores oficiais da Moralí já aplicadas.
+   Cores da Moralí (a 1ª imobiliária); nome, logo e rodapé vêm do banco.
    ===================================================================== */
 :root{
   --cor-fundo:        #eef2f4;  /* fundo geral (cinza claro) */
@@ -227,6 +227,16 @@ select{
   background:rgba(2,48,71,.05);
 }
 
+/* 21/09/2026 — a caixa da avaliação gratuita, logo abaixo do valor */
+.check-avaliacao{margin-top:10px;align-items:flex-start;font-size:14px;line-height:1.45}
+.check-avaliacao input{margin-top:1px}
+.check-avaliacao b{color:var(--cor-destaque)}
+#valorAluguel:disabled{background:var(--cor-fundo);color:var(--cor-suave);cursor:not-allowed}
+/* a marca da imobiliária: nome em texto quando não há logotipo */
+.logo-nome{font-weight:700;font-size:20px;color:var(--cor-destaque);letter-spacing:.3px}
+.logo-img{display:none}
+.logo-img.pronta{display:inline-block}
+
 /* Área de upload do documento */
 .dropzone{
   border:1.5px dashed var(--cor-borda);
@@ -397,7 +407,8 @@ select{
 
   <!-- Cabeçalho / Logo -->
   <header class="topo">
-    <img src="https://cadastro.imoveismorali.com.br/logo.png" alt="Moralí" class="logo-img">
+    <!-- 21/09/2026: o logotipo vem do banco (ficha_pagina → balde logos); sem logo, o nome em texto -->
+    <img src="" alt="" class="logo-img">
   </header>
 
   <!-- Régua de fases -->
@@ -531,14 +542,22 @@ select{
         <input type="hidden" name="garagem"     value="1">
 
         <div class="campo">
-          <label>Quanto você quer de aluguel? <span class="req">*</span></label>
-          <input type="text" name="valor_aluguel" class="mask-moeda" inputmode="numeric" placeholder="R$ 0,00" required>
-          <span class="dica">Um valor aproximado já serve. A Moralí avalia e conversa com você.</span>
+          <label>Quanto você quer de aluguel? <span class="req" id="valorReq">*</span></label>
+          <input type="text" name="valor_aluguel" id="valorAluguel" class="mask-moeda" inputmode="numeric" placeholder="R$ 0,00" required>
+          <!-- 21/09/2026 — a caixa da avaliação. Marcou, o valor deixa de ser
+               obrigatório e o campo apaga: número inventado não entra no CRM.
+               O CRM lê `avaliacao_gratuita = 'Sim'` na ficha e, ao aprovar como
+               imóvel, cria a tarefa "Avaliar o imóvel" (ficha_aprovar). -->
+          <label class="check check-avaliacao" id="avaliacaoCheck">
+            <input type="checkbox" name="avaliacao_gratuita" value="Sim">
+            <span>Não sei quanto cobrar. Quero que a imobiliária faça uma
+              <b>avaliação gratuita</b> do meu imóvel.</span>
+          </label>
         </div>
 
         <details class="opcional">
           <summary>Quer detalhar mais? (opcional)</summary>
-          <span class="dica">Se você não souber agora, a Moralí confere na vistoria.</span>
+          <span class="dica">Se você não souber agora, a imobiliária confere na vistoria.</span>
 
           <!-- Só aparece para Apartamento e Kitnet. Casa não tem andar nem elevador. -->
           <div id="blocoApto" style="display:none">
@@ -669,7 +688,7 @@ select{
         <!-- ===== O que a Moralí pediria depois, para quem quiser adiantar ===== -->
         <details class="opcional">
           <summary>Quer adiantar o cadastro completo? (opcional)</summary>
-          <span class="dica">Nada aqui é obrigatório. Se preferir, a Moralí pede depois pelo WhatsApp.</span>
+          <span class="dica">Nada aqui é obrigatório. Se preferir, a imobiliária pede depois pelo WhatsApp.</span>
 
           <div class="campo">
             <label>Voltagem da energia elétrica</label>
@@ -702,7 +721,7 @@ select{
           <div class="campo">
             <label>Chave PIX para o repasse do aluguel</label>
             <input type="text" name="banco_pix" placeholder="CPF, celular, e-mail ou chave aleatória">
-            <span class="dica">É para onde a Moralí deposita o seu aluguel todo mês.</span>
+            <span class="dica">É para onde a imobiliária deposita o seu aluguel todo mês.</span>
           </div>
         </details>
 
@@ -741,18 +760,16 @@ select{
       </div>
       <h1>Cadastro enviado!</h1>
       <p>Recebemos as informações do seu imóvel e em breve entraremos em contato pelo WhatsApp.</p>
-      <p><a href="https://wa.me/5517996808900" style="color:inherit">
-        Falar com a Moralí no WhatsApp</a></p>
-      <p>Obrigado por confiar na Moralí para cuidar do seu patrimônio.</p>
+      <p id="waLinha" style="display:none"><a id="waLink" href="#" style="color:inherit">
+        Falar com a imobiliária no WhatsApp</a></p>
+      <p>Obrigado pela confiança.</p>
     </section>
 
   </div>
 
   <!-- Rodapé institucional -->
-  <footer class="rodape">
-    MORALÍ GESTÃO IMOBILIÁRIA LTDA<br>
-    CNPJ 07.697.516/0001-86 · CRECI 54547-J
-  </footer>
+  <!-- 21/09/2026: razão social, CNPJ e CRECI vêm do banco (ficha_pagina) -->
+  <footer class="rodape" id="rodape"></footer>
 
 </div>
 
@@ -1036,6 +1053,72 @@ document.addEventListener('input', function(e){
   else if(t.classList.contains('mask-cep')) t.value = maskCep(t.value);
   else if(t.classList.contains('mask-data')) t.value = maskData(t.value);
   else if(t.classList.contains('mask-moeda')) t.value = maskMoeda(t.value);
+});
+
+/* ===== 21/09/2026 — avaliação gratuita =====
+   Marcou: o valor deixa de ser obrigatório, é apagado e o campo trava;
+   desmarcou: volta como era. A validação de sempre (querySelectorAll
+   '[required]') não precisa saber de nada — o atributo vai e vem. */
+document.addEventListener('DOMContentLoaded', () => {
+  const cx = document.querySelector('#avaliacaoCheck input');
+  const v  = document.getElementById('valorAluguel');
+  const rq = document.getElementById('valorReq');
+  if(!cx || !v) return;
+  cx.addEventListener('change', () => {
+    if(cx.checked){
+      v.value = ''; v.disabled = true; v.removeAttribute('required');
+      v.placeholder = 'A imobiliária avalia'; v.classList.remove('invalido');
+      if(rq) rq.style.display = 'none';
+    } else {
+      v.disabled = false; v.setAttribute('required', '');
+      v.placeholder = 'R$ 0,00';
+      if(rq) rq.style.display = '';
+    }
+  });
+});
+
+/* ===== 21/09/2026 — A MARCA DA IMOBILIÁRIA (SaaS) =====
+   A página nasce SEM nome: nem logo, nem rodapé, nem WhatsApp. Ao abrir,
+   pergunta ao banco de quem ela é (ficha_pagina, decidido pelo domínio
+   ou pelo ?i=, como o ficha_iniciar) e pinta a marca. Falhou a pergunta?
+   A página continua funcionando, neutra — nunca com a marca de outra
+   imobiliária. O logotipo vem do balde público `logos`, o mesmo dos
+   documentos do CRM. */
+document.addEventListener('DOMContentLoaded', async () => {
+  try{
+    const params = new URLSearchParams(window.location.search);
+    const m = await rpc('ficha_pagina', { p_origem: location.hostname, p_apelido: params.get('i') || null });
+    if(!m || !m.ok || !m.nome) return;
+    document.title = 'Cadastro de Imóvel — ' + m.nome;
+    const img = document.querySelector('.logo-img');
+    if(img){
+      if(m.logo_path){
+        img.alt = m.nome;
+        img.onload = () => img.classList.add('pronta');
+        img.src = SUPABASE_URL + '/storage/v1/object/public/logos/' + m.logo_path;
+      } else {
+        const nome = document.createElement('div');
+        nome.className = 'logo-nome'; nome.textContent = m.nome;
+        img.replaceWith(nome);
+      }
+    }
+    const rodape = document.getElementById('rodape');
+    if(rodape){
+      const l1 = document.createElement('span'); l1.textContent = m.razao_social || m.nome;
+      rodape.textContent = '';
+      rodape.appendChild(l1);
+      const partes = [];
+      if(m.cnpj)  partes.push('CNPJ ' + m.cnpj);
+      if(m.creci) partes.push('CRECI ' + m.creci);
+      if(partes.length){ rodape.appendChild(document.createElement('br')); rodape.appendChild(document.createTextNode(partes.join(' · '))); }
+    }
+    const wa = document.getElementById('waLink');
+    if(wa && m.whatsapp && /^\d{10,15}$/.test(String(m.whatsapp))){
+      wa.href = 'https://wa.me/' + m.whatsapp;
+      wa.textContent = 'Falar com ' + m.nome + ' no WhatsApp';
+      const linha = document.getElementById('waLinha'); if(linha) linha.style.display = '';
+    }
+  }catch(e){ /* sem marca: a página segue neutra */ }
 });
 
 /* ===== Destaque da opção escolhida =====
