@@ -397,6 +397,17 @@ select{
   vertical-align:-3px;margin-right:8px;
 }
 @keyframes gira{to{transform:rotate(360deg)}}
+
+/* v2.169 (28/10/2026) — celular sem espaço: o aviso que troca o
+   "voltar para o início". Mesmos tons do aviso-forte da casa. */
+.aviso-espaco{background:#fff6e8;border:1.5px solid #f0c98a;border-radius:var(--raio);padding:16px 18px;margin:0 0 20px;text-align:left}
+.aviso-espaco .tit{display:flex;align-items:center;gap:8px;color:#8a5a12;font-size:16.5px;font-weight:700;margin-bottom:6px;line-height:1.3}
+.aviso-espaco .tit svg{width:22px;height:22px;flex-shrink:0}
+.aviso-espaco p,#thanks .aviso-espaco p{color:#6b4d18;font-size:14.5px;line-height:1.5;margin:0 0 8px}
+.aviso-espaco ul,#thanks .aviso-espaco ul{margin:0 0 4px 18px;padding:0;color:#6b4d18;font-size:14.5px;line-height:1.5}
+.aviso-espaco li{margin-bottom:6px}
+.aviso-espaco .btn{display:block;width:100%;margin-top:12px;text-align:center;text-decoration:none}
+.dropzone.sem-espaco{border-style:solid;border-color:#f0c98a;background:#fffaf2}
 </style>
 </head>
 <body>
@@ -794,7 +805,7 @@ const TIPO_FICHA   = "Proprietário";
 const BUCKET       = "documentos-proprietarios";
 
 /** quando a página abriu — serve para saber se quem enviou é gente */
-const ABERTO_EM = Date.now();
+let ABERTO_EM = Date.now();   // v2.169: o rascunho pode trazer a hora da 1ª abertura
 
 async function rpc(funcao, args){
   const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${funcao}`, {
@@ -912,6 +923,7 @@ function mostrarEtapa(i){
   // régua de fases
   stepper.style.display = 'flex';
   atualizarRegua(seq[i]);
+  agendarRascunho();     // v2.169 — a etapa entra no rascunho
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -1089,6 +1101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     const m = await rpc('ficha_pagina', { p_origem: location.hostname, p_apelido: params.get('i') || null });
     if(!m || !m.ok || !m.nome) return;
+    marcaPagina = m;     // v2.169 — o WhatsApp do aviso de documento faltando
     document.title = 'Cadastro de Imóvel — ' + m.nome;
     const img = document.querySelector('.logo-img');
     if(img){
@@ -1175,8 +1188,19 @@ const inputDoc = document.getElementById('documento');
 const docSel   = document.getElementById('docSelecionado');
 const docNome  = document.getElementById('docNome');
 if(inputDoc){
-  inputDoc.addEventListener('change', ()=>{
+  inputDoc.addEventListener('click', cameraVaiAbrir);     // v2.169
+  inputDoc.addEventListener('cancel', cameraVoltou);
+  inputDoc.addEventListener('change', async ()=>{
+    cameraVoltou();
     if(inputDoc.files.length){
+      // v2.169 — celular cheio: a câmera devolve arquivo vazio ou que não abre
+      if(!(await arquivoAbre(inputDoc.files[0]))){
+        inputDoc.value = '';
+        docSel.classList.remove('show');
+        avisoSemEspaco('anexo');
+        return;
+      }
+      tirarAvisoSemEspaco();
       docNome.textContent = inputDoc.files[0].name;
       docSel.classList.add('show');
     } else {
@@ -1283,8 +1307,13 @@ async function enviar(){
     const anexos = [];
     if(inputDoc && inputDoc.files.length){
       try{
+        // v2.169 — confere antes: arquivo que não abre não sobe
+        if(!(await arquivoAbre(inputDoc.files[0]))) throw erroSemEspaco();
         anexos.push(await enviarDocumento(inputDoc.files[0], inicio.token));
       }catch(e){
+        // falta de espaço não pergunta nada: o cadastro vai sem ele
+        if(ehFaltaDeEspaco(e)){ semEspaco = true; }
+        else{
         const seguir = confirm(
           'Não consegui enviar o documento (' + e.message + ').\n\n' +
           'Quer enviar o cadastro mesmo assim? Você poderá mandar o ' +
@@ -1294,13 +1323,20 @@ async function enviar(){
           btn.innerHTML = 'Enviar cadastro';
           return;
         }
+        }
       }
     }
 
     // O status do documento sai do envio que vale — o de cima, com o
     // token. Antes era escrito antes de qualquer upload acontecer.
-    dados.documento_status  = (!inputDoc || !inputDoc.files.length) ? 'sem documento'
+    const faltou = semEspaco && !anexos.length;      // v2.169
+    dados.documento_status  = faltou ? 'celular sem espaço'
+                            : (!inputDoc || !inputDoc.files.length) ? 'sem documento'
                             : (anexos.length ? 'enviado' : 'falha no envio');
+    if(faltou){
+      dados.observacao = AVISO_SEM_ESPACO + ' O documento não veio — pedir pelo WhatsApp.'
+                       + (String(dados.observacao || '').trim() ? '\n\n' + dados.observacao : '');
+    }
     dados.documento_arquivo = anexos.length ? anexos[0].caminho : '';
 
     // 3) fecha a ficha
@@ -1312,7 +1348,7 @@ async function enviar(){
       p_segundos: Math.round((Date.now() - ABERTO_EM) / 1000)
     });
 
-    localStorage.removeItem(RASCUNHO);   // deu certo: o rascunho não serve mais
+    limparRascunho();   // deu certo: o rascunho não serve mais
 
     const alvo = document.getElementById('protocolo');
     if(alvo) alvo.textContent = inicio.protocolo || '';
@@ -1320,6 +1356,7 @@ async function enviar(){
     progressFill.style.width = '100%';
     stepper.style.display = 'none';
     thanks.classList.add('active');
+    if(faltou) faltamNaTelaFinal(inicio.protocolo, 'o documento', 'a foto', thanks.querySelector('p'));
     window.scrollTo({top:0,behavior:'smooth'});
   }catch(err){
     btn.disabled = false;
@@ -1331,50 +1368,243 @@ async function enviar(){
 }
 
 /* =====================================================================
-   RASCUNHO NO APARELHO
-   Formulário de 7 etapas em celular: basta uma ligação entrar para a
-   pessoa perder tudo e não voltar. Guardar o que ela digitou custa
-   quatro linhas e é a diferença entre recomeçar e continuar.
-   Nada sai do aparelho — é o localStorage do próprio navegador dela.
+   v2.169 (28/10/2026) — CELULAR SEM ESPAÇO
+   Com o celular cheio, duas coisas aconteciam caladas: o rascunho não
+   gravava (o erro era engolido) e, ao abrir a câmera, o celular fechava
+   esta página para se virar. Ela voltava para a tela inicial com tudo
+   vazio. Agora:
+   1. o rascunho tem uma cópia que sobrevive à recarga mesmo sem espaço:
+      history.state, que mora na memória do navegador junto do endereço
+      desta aba — não precisa de disco;
+   2. a recarga volta para a ETAPA onde ela estava, com as bolinhas
+      marcadas (antes: tela inicial, e as bolinhas não voltavam);
+   3. a falta de espaço vira um aviso que diz o que fazer;
+   4. a ficha vai assim mesmo, com uma observação para a equipe pedir os
+      documentos pelo WhatsApp.
+   Nada disto sai do aparelho: as três cópias são do navegador dela.
    ===================================================================== */
 const RASCUNHO = 'morali-ficha-proprietario';
 
-function guardarRascunho(){
+let semEspaco   = false;   // o celular já mostrou que não tem espaço
+let cameraDesde = 0;       // hora em que a câmera/galeria abriu; 0 = fechada
+
+const AVISO_SEM_ESPACO = '[Aviso automático] Ficha finalizada automaticamente: ' +
+  'o celular não tinha armazenamento disponível para preparar o documento.';
+
+function erroSemEspaco(){
+  const e = new Error('o celular está sem espaço');
+  e.name = 'QuotaExceededError';
+  return e;
+}
+
+/** Os erros que o navegador dá quando não tem onde pôr o arquivo: cota
+ *  estourada, arquivo que a câmera não conseguiu gravar (não abre ou
+ *  sumiu) e memória que não deu para reservar. Erro de rede NÃO entra —
+ *  esse continua com a mensagem de sempre. */
+function ehFaltaDeEspaco(e){
+  return !!e && ['QuotaExceededError', 'NS_ERROR_DOM_QUOTA_REACHED',
+                 'NotReadableError', 'NotFoundError', 'RangeError'].indexOf(e.name) > -1;
+}
+
+/** Arquivo que a câmera devolveu vazio, ou que não dá para ler, é o
+ *  sinal do celular cheio. Lê 1 byte só — não pesa. */
+async function arquivoAbre(f){
+  if(!f || !f.size) return false;
+  try{ await f.slice(0, 1).arrayBuffer(); return true; }
+  catch(e){ return !ehFaltaDeEspaco(e); }
+}
+
+const ICONE_SEM_ESPACO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/>' +
+  '<line x1="12" y1="7.5" x2="12" y2="12.5"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+
+/** Só texto fixo entra aqui — nada que a pessoa digitou. */
+function caixaSemEspaco(titulo, texto, resto){
+  return '<div class="aviso-espaco" role="alert"><div class="tit">' + ICONE_SEM_ESPACO + titulo +
+         '</div><p>' + texto + '</p>' + (resto || '') + '</div>';
+}
+
+function textoDoAviso(tipo){
+  return tipo === 'fechou'
+    ? { t: 'O celular fechou esta página',
+        p: 'Para abrir a câmera, o celular precisou fechar a página — isso acontece quando falta espaço. ' +
+           'Suas respostas <b>foram recuperadas</b>: você voltou para onde parou.' }
+    : { t: 'Seu celular está sem espaço',
+        p: 'Ele não conseguiu preparar a foto do documento. O que você já preencheu <b>continua guardado</b>.' };
+}
+
+/** Tela final: a ficha foi, faltam os documentos. O botão do WhatsApp
+ *  só aparece se a imobiliária tem o número cadastrado (ficha_pagina). */
+async function faltamNaTelaFinal(protocolo, oque, foto, ancora){
+  if(!ancora) return;
+  ancora.insertAdjacentHTML('afterend', caixaSemEspaco(
+    (oque === 'o documento' ? 'Falta só ' : 'Faltam só ') + oque,
+    'Seu celular estava sem espaço, então a ficha foi enviada <b>sem ' + oque + '</b>. ' +
+    'A imobiliária já sabe. Quando puder, mande ' + foto + ' pelo WhatsApp.',
+    '<a class="btn btn-principal" id="zapDocs" target="_blank" rel="noopener" style="display:none">' +
+    'Mandar ' + oque + ' pelo WhatsApp</a>'));
   try{
-    const fd = new FormData(document.getElementById('form'));
-    const o = {}; fd.forEach((v,k)=>{ if(k !== 'confirme-email') o[k] = v; });
-    localStorage.setItem(RASCUNHO, JSON.stringify({ em: Date.now(), d: o }));
-  }catch(e){}
+    const params = new URLSearchParams(window.location.search);
+    const m = marcaPagina || await rpc('ficha_pagina',
+                { p_origem: location.hostname, p_apelido: params.get('i') || null });
+    const a = document.getElementById('zapDocs');
+    if(a && m && m.ok && /^\d{10,15}$/.test(String(m.whatsapp || ''))){
+      a.href = 'https://wa.me/' + m.whatsapp + '?text=' + encodeURIComponent(
+        'Olá! Enviei a ficha ' + (protocolo || '') + ' pelo site e vou mandar ' + oque + ' por aqui.');
+      a.style.display = '';
+    }
+  }catch(e){ /* sem o número: o texto já diz "pelo WhatsApp" */ }
+}
+
+/* ---- A câmera vai abrir: guarda AGORA onde ela está ----
+   Se o celular fechar a página para abrir a câmera, a recarga encontra
+   a marca e volta para cá com o aviso. Se a página continuar viva, a
+   marca sai quando a câmera fecha (arquivo escolhido, desistência ou a
+   página voltando a aparecer). */
+function cameraVaiAbrir(){ cameraDesde = Date.now(); guardarRascunho(); }
+function cameraVoltou(){ if(!cameraDesde) return; cameraDesde = 0; agendarRascunho(); }
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden && cameraDesde) setTimeout(cameraVoltou, 1500);
+});
+window.addEventListener('focus', () => { if(cameraDesde) setTimeout(cameraVoltou, 1500); });
+
+/* ---- O rascunho ---- */
+function respostas(){
+  const fd = new FormData(document.getElementById('form'));
+  const o = {};
+  fd.forEach((v, k) => {
+    // o aceite do termo a pessoa marca de novo: não é coisa de rascunho
+    if(k === 'confirme-email' || k === 'aceite_lgpd' || typeof v !== 'string') return;
+    o[k] = (k in o) ? [].concat(o[k], v) : v;     // caixinhas de mesmo nome
+  });
+  return o;
+}
+
+function etapaAtual(){
+  if(thanks.classList.contains('active')) return '';
+  const s = document.querySelector('.step.active');
+  return s ? s.id : '';
+}
+
+function guardarRascunho(){
+  clearTimeout(guardarRascunho.t);
+  let g;
+  try{ g = { em: Date.now(), aberto: ABERTO_EM, etapa: etapaAtual(), camera: cameraDesde, semEspaco, d: respostas() }; }
+  catch(e){ return; }
+  try{ history.replaceState(Object.assign({}, history.state, { [RASCUNHO]: g }), ''); }catch(e){}
+  const txt = JSON.stringify(g);
+  try{ sessionStorage.setItem(RASCUNHO, txt); }catch(e){}
+  try{ localStorage.setItem(RASCUNHO, txt); }catch(e){}
+}
+
+/** Digitação grava no máximo uma vez por segundo: o Safari recusa mais
+ *  de 100 history.replaceState em 30 segundos. */
+function agendarRascunho(){
+  clearTimeout(guardarRascunho.t);
+  guardarRascunho.t = setTimeout(guardarRascunho, 1000);
+}
+
+function limparRascunho(){
+  clearTimeout(guardarRascunho.t);
+  try{ history.replaceState(null, ''); }catch(e){}
+  try{ sessionStorage.removeItem(RASCUNHO); }catch(e){}
+  try{ localStorage.removeItem(RASCUNHO); }catch(e){}
 }
 
 function lerRascunho(){
-  try{
-    const g = JSON.parse(localStorage.getItem(RASCUNHO) || 'null');
-    if(!g || !g.d) return;
-    // rascunho de mais de 7 dias é lixo, não ajuda ninguém
-    if(Date.now() - g.em > 7*24*3600*1000){ localStorage.removeItem(RASCUNHO); return; }
-    let achou = 0;
-    for(const [k,v] of Object.entries(g.d)){
-      const el = document.querySelector(`[name="${k}"]`);
-      if(el && !el.value && v){ el.value = v; achou++; }
-    }
-    if(achou > 3){
-      const aviso = document.createElement('div');
-      aviso.style.cssText = 'background:#EDF3F6;padding:10px 14px;border-radius:8px;'
-                          + 'font-size:13.5px;margin-bottom:14px';
-      aviso.innerHTML = 'Recuperamos o que você já tinha preenchido. '
-        + '<a href="#" id="limpar-rascunho" style="color:inherit">Começar do zero</a>';
-      const alvo = document.querySelector('.screen.active') || document.body;
-      alvo.prepend(aviso);
-      document.getElementById('limpar-rascunho').onclick = e => {
-        e.preventDefault(); localStorage.removeItem(RASCUNHO); location.reload();
-      };
-    }
-  }catch(e){}
+  let g = null;
+  try{ g = (history.state || {})[RASCUNHO] || null; }catch(e){}
+  ['sessionStorage', 'localStorage'].forEach(area => {
+    if(g) return;
+    try{ g = JSON.parse(window[area].getItem(RASCUNHO) || 'null'); }catch(e){}
+  });
+  if(!g || !g.d) return;
+  // rascunho de mais de 7 dias é lixo, não ajuda ninguém
+  if(Date.now() - g.em > 7*24*3600*1000){ limparRascunho(); return; }
+
+  const campos = k => document.querySelectorAll('[name="' + CSS.escape(k) + '"]');
+  let achou = 0;
+  // 1º as escolhas (bolinha, caixinha, lista): elas mudam a tela — a
+  // etapa do cônjuge aparece, o CPF vira CNPJ — e só depois os textos
+  for(const [k, v] of Object.entries(g.d)){
+    const lista = [].concat(v).map(String);
+    campos(k).forEach(el => {
+      if(el.type === 'radio' || el.type === 'checkbox'){
+        if(lista.indexOf(el.value) > -1 && !el.checked){
+          el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); achou++;
+        }
+      }else if(el.tagName === 'SELECT' && !el.value && lista[0]){
+        el.value = lista[0]; el.dispatchEvent(new Event('change', { bubbles: true })); achou++;
+      }
+    });
+  }
+  for(const [k, v] of Object.entries(g.d)){
+    const val = String([].concat(v)[0] || '');
+    campos(k).forEach(el => {
+      if(el.type === 'radio' || el.type === 'checkbox' || el.type === 'file' || el.tagName === 'SELECT') return;
+      if(!el.value && val){ el.value = val; achou++; }
+    });
+  }
+
+  semEspaco = !!g.semEspaco;
+  // o relógio da trava de robô (menos de 8 s = descarta calado) conta
+  // desde a PRIMEIRA abertura: quem volta já na última etapa e envia
+  // rápido não pode ter a ficha jogada fora
+  if(g.aberto > 0 && g.aberto < ABERTO_EM) ABERTO_EM = g.aberto;
+  const fechouComCamera = !!g.camera && Date.now() - g.camera < 30*60*1000;
+  if(fechouComCamera) semEspaco = true;
+  if(achou <= 3 && !fechouComCamera) return;
+
+  // volta para a etapa onde ela estava — antes era sempre a tela inicial
+  const pos = sequencia().indexOf(g.etapa);
+  if(pos > -1) mostrarEtapa(pos);
+  if(fechouComCamera){ avisoSemEspaco('fechou'); return; }
+
+  const aviso = document.createElement('div');
+  aviso.style.cssText = 'background:#EDF3F6;padding:10px 14px;border-radius:8px;'
+                      + 'font-size:13.5px;margin-bottom:14px';
+  aviso.innerHTML = 'Recuperamos o que você já tinha preenchido. '
+    + '<a href="#" id="limpar-rascunho" style="color:inherit">Começar do zero</a>';
+  const alvo = document.querySelector('.step.active') || document.querySelector('.screen.active') || document.body;
+  alvo.prepend(aviso);
+  document.getElementById('limpar-rascunho').onclick = e => {
+    e.preventDefault(); limparRascunho(); location.reload();
+  };
 }
 
-document.addEventListener('input', guardarRascunho);
+document.addEventListener('input', agendarRascunho);
+document.addEventListener('change', agendarRascunho);
 document.addEventListener('DOMContentLoaded', lerRascunho);
+
+/* ---- Só do proprietário: um documento, na última etapa ---- */
+let marcaPagina = null;     // preenchida pela ficha_pagina ao abrir
+
+function avisoSemEspaco(tipo){
+  semEspaco = true;
+  tirarAvisoSemEspaco(true);
+  const bloco = document.querySelector('.bloco-doc');
+  const dz = bloco.querySelector('.dropzone');
+  dz.classList.add('sem-espaco');
+  const x = textoDoAviso(tipo);
+  dz.insertAdjacentHTML('beforebegin', caixaSemEspaco(x.t, x.p,
+    '<p>Você pode:</p><ul>' +
+    '<li><b>Liberar espaço</b> no celular (apagar fotos, vídeos ou aplicativos que não usa) e tocar de novo na foto do documento; ou</li>' +
+    '<li><b>Seguir sem o documento</b> e mandar depois pelo WhatsApp da imobiliária.</li></ul>' +
+    '<p style="margin-top:8px">Para seguir, é só tocar em <b>Enviar cadastro</b>: ele vai sem o documento.</p>'));
+  bloco.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  agendarRascunho();
+}
+
+/** O documento subiu certo depois de liberar espaço: some o aviso. */
+function tirarAvisoSemEspaco(soACaixa){
+  const bloco = document.querySelector('.bloco-doc');
+  const velho = bloco && bloco.querySelector('.aviso-espaco');
+  if(velho) velho.remove();
+  if(soACaixa) return;
+  semEspaco = false;
+  if(bloco) bloco.querySelector('.dropzone').classList.remove('sem-espaco');
+  agendarRascunho();
+}
 
 /* =====================================================================
    O CEP PREENCHE O ENDEREÇO
